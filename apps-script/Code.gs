@@ -2,8 +2,10 @@
  * MathBook — сервер на Google Apps Script.
  * Таблиця = база даних, цей скрипт = міст між сайтом і таблицею.
  *
- * 1. Один раз запустіть функцію setup() — вона створить аркуші з прикладами.
+ * 1. Запустіть функцію setup() — вона створить аркуші з прикладами
+ *    (а якщо аркуші вже є — лише додасть нові налаштування, нічого не стираючи).
  * 2. Розгорніть як веб-застосунок (див. README.md).
+ *    Після зміни цього коду: Розгорнути → Керувати розгортаннями → ✏️ → Нова версія.
  */
 
 const SHEET = {
@@ -22,34 +24,37 @@ function setup() {
     ['Назва класу', '5-А клас'],
     ['XP за правильну відповідь', 10],
     ['Гостьовий режим (так/ні)', 'так'],
+    ['Пароль вчителя', 'змініть-мене'],
   ]);
   makeSheet_(ss, SHEET.students, [
     ['Ім’я', 'PIN'],
     ['Оля К.', '1234'],
     ['Петро С.', '5678'],
-  ], 2);
+  ], true);
   makeSheet_(ss, SHEET.trainers, [
     ['Тренажер', 'Питання', 'Відповідь', 'Хибні варіанти (через кому, необов’язково)'],
     ['Периметр і площа', 'Периметр квадрата зі стороною 6 см', '24', ''],
     ['Периметр і площа', 'Площа прямокутника 4 см × 7 см', '28', '22, 11, 47'],
     ['Периметр і площа', 'Сторона квадрата, якщо його площа 81 см²', '9', ''],
     ['Периметр і площа', 'Скільки см² в 1 дм²?', '100', '10, 1000'],
-  ]);
+  ], true);
   makeSheet_(ss, SHEET.lessons, [
     ['Урок', 'Пояснення', 'Питання', 'Відповідь'],
     ['Що таке дріб', 'Дріб показує, на скільки рівних частин поділили ціле (знаменник — нижнє число) і скільки частин узяли (чисельник — верхнє число).', 'Піцу поділили на 8 шматків, з’їли 3. Який дріб піци з’їли?', '3/8'],
     ['Що таке дріб', 'Якщо чисельник дорівнює знаменнику, дріб дорівнює цілому: 4/4 = 1.', 'Чому дорівнює 5/5?', '1'],
     ['Що таке дріб', 'Щоб знайти дріб від числа, ділимо число на знаменник і множимо на чисельник: 3/4 від 20 = 20 : 4 · 3 = 15.', 'Скільки буде 2/5 від 30?', '12'],
-  ]);
+  ], true);
+  migrate_(ss);
   makeSheet_(ss, SHEET.results, [
     ['Дата', 'Учень', 'Тренажер', 'Правильно', 'Всього', 'XP'],
   ]);
 }
 
-function makeSheet_(ss, name, rows, textCol) {
+function makeSheet_(ss, name, rows, asText) {
   if (ss.getSheetByName(name)) return;
   const sh = ss.insertSheet(name);
-  if (textCol) sh.getRange(1, textCol, 500, 1).setNumberFormat('@'); // PIN як текст, щоб не губились нулі
+  // Текстовий формат: PIN «0123» не втратить нуль, а відповідь «3/8» не стане датою
+  if (asText) sh.getRange(1, 1, 1000, rows[0].length).setNumberFormat('@');
   sh.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
   sh.getRange(1, 1, 1, rows[0].length).setFontWeight('bold');
   sh.setFrozenRows(1);
@@ -68,6 +73,7 @@ function doPost(e) {
   try { body = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false, error: 'Неправильний запит' }); }
   if (body.action === 'login') return json_(login_(body));
   if (body.action === 'result') return json_(saveResult_(body));
+  if (body.action === 'teacher') return json_(teacher_(body));
   return json_({ ok: false, error: 'Невідома дія' });
 }
 
@@ -82,9 +88,14 @@ function rows_(name) {
   return sh.getDataRange().getValues().slice(1).filter(r => r.some(c => String(c).trim() !== ''));
 }
 
-function settings_() {
+function settingsRaw_() {
   const s = {};
   rows_(SHEET.settings).forEach(r => { s[String(r[0]).trim()] = r[1]; });
+  return s;
+}
+
+function settings_() {
+  const s = settingsRaw_();
   return {
     className: String(s['Назва класу'] || 'Мій клас'),
     xpPerAnswer: Number(s['XP за правильну відповідь']) || 10,
@@ -176,4 +187,115 @@ function saveResult_(body) {
   }
   const info = studentInfo_(name);
   return { ok: true, gained: xp, xp: info.xp, done: info.done, rating: rating_() };
+}
+
+/* ---------- оновлення таблиці, створеної старішою версією ---------- */
+function migrate_(ss) {
+  // нові налаштування, яких могло не бути
+  const have = settingsRaw_();
+  if (!('Гостьовий режим (так/ні)' in have)) setSetting_('Гостьовий режим (так/ні)', 'так');
+  if (!('Пароль вчителя' in have)) setSetting_('Пароль вчителя', 'змініть-мене');
+  // текстовий формат для аркушів з відповідями та PIN
+  [SHEET.students, SHEET.trainers, SHEET.lessons].forEach(name => {
+    const sh = ss.getSheetByName(name);
+    if (sh) sh.getRange(2, 1, sh.getMaxRows() - 1, Math.min(4, sh.getMaxColumns())).setNumberFormat('@');
+  });
+  // відповідь «3/8» у прикладі уроку могла перетворитися на дату — повертаємо як текст
+  const ls = ss.getSheetByName(SHEET.lessons);
+  if (ls) {
+    const v = ls.getDataRange().getValues();
+    for (let i = 1; i < v.length; i++) {
+      if (String(v[i][2]).indexOf('Піцу поділили на 8') === 0 && v[i][3] instanceof Date) ls.getRange(i + 1, 4).setValue('3/8');
+    }
+  }
+}
+
+/* ---------- кабінет вчителя ---------- */
+function teacher_(b) {
+  const pass = String(settingsRaw_()['Пароль вчителя'] || '').trim();
+  if (!pass) return { ok: false, error: 'Пароль вчителя не задано. Запустіть setup() у скрипті ще раз.' };
+  if (String(b.password || '').trim() !== pass) {
+    Utilities.sleep(1000); // гальмуємо підбір пароля
+    return { ok: false, error: 'Неправильний пароль' };
+  }
+  if (b.op === 'login' || b.op === 'overview') return overview_();
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    let err = null;
+    if (b.op === 'addStudent') err = addStudent_(b);
+    else if (b.op === 'deleteStudent') deleteWhere_(SHEET.students, r => String(r[0]).trim() === String(b.name).trim());
+    else if (b.op === 'addTrainer') err = addTrainer_(b);
+    else if (b.op === 'deleteTrainer') deleteWhere_(SHEET.trainers, r => String(r[0]).trim() === String(b.name).trim());
+    else if (b.op === 'saveSettings') saveSettings_(b);
+    else err = 'Невідома дія';
+    if (err) return { ok: false, error: err };
+  } finally {
+    lock.releaseLock();
+  }
+  return overview_();
+}
+
+function overview_() {
+  const s = settings_();
+  return {
+    ok: true,
+    settings: { className: s.className, xpPerAnswer: s.xpPerAnswer, guestMode: s.guestMode },
+    students: rows_(SHEET.students).map(r => ({ name: String(r[0]).trim(), pin: String(r[1]).trim() })).filter(x => x.name),
+    results: rows_(SHEET.results).map(r => ({
+      date: r[0] instanceof Date ? r[0].toISOString() : String(r[0]),
+      name: String(r[1]).trim(), trainer: String(r[2]),
+      correct: Number(r[3]) || 0, total: Number(r[4]) || 0, xp: Number(r[5]) || 0,
+    })),
+    trainers: init_().trainers,
+  };
+}
+
+function addStudent_(b) {
+  const name = String(b.name || '').trim().slice(0, 40);
+  if (!name) return 'Вкажіть ім’я учня';
+  const students = rows_(SHEET.students);
+  if (students.some(r => String(r[0]).trim() === name)) return 'Учень з таким ім’ям уже є';
+  let pin = String(b.pin || '').trim();
+  if (pin && !/^\d{4,6}$/.test(pin)) return 'PIN — це 4–6 цифр';
+  if (!pin) pin = String(Math.floor(1000 + Math.random() * 9000));
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET.students);
+  sh.getRange(sh.getLastRow() + 1, 1, 1, 2).setNumberFormat('@').setValues([[name, pin]]);
+  return null;
+}
+
+function addTrainer_(b) {
+  const name = String(b.name || '').trim().slice(0, 60);
+  if (!name) return 'Вкажіть назву тренажера';
+  if (rows_(SHEET.trainers).some(r => String(r[0]).trim() === name)) return 'Тренажер з такою назвою вже є';
+  const qs = (b.questions || []).slice(0, 50)
+    .map(q => [name, String(q.q || '').trim(), String(q.a || '').trim(), String(q.wrong || '').trim()])
+    .filter(r => r[1] && r[2]);
+  if (!qs.length) return 'Додайте хоча б одне питання з відповіддю';
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET.trainers);
+  sh.getRange(sh.getLastRow() + 1, 1, qs.length, 4).setNumberFormat('@').setValues(qs);
+  return null;
+}
+
+function saveSettings_(b) {
+  if (b.className) setSetting_('Назва класу', String(b.className).trim().slice(0, 40));
+  if (b.xpPerAnswer) setSetting_('XP за правильну відповідь', Math.max(1, Math.min(100, Number(b.xpPerAnswer) || 10)));
+  if (typeof b.guestMode === 'boolean') setSetting_('Гостьовий режим (так/ні)', b.guestMode ? 'так' : 'ні');
+  if (b.newPassword && String(b.newPassword).trim().length >= 6) setSetting_('Пароль вчителя', String(b.newPassword).trim());
+}
+
+function setSetting_(key, value) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET.settings);
+  const v = sh.getDataRange().getValues();
+  for (let i = 1; i < v.length; i++) {
+    if (String(v[i][0]).trim() === key) { sh.getRange(i + 1, 2).setValue(value); return; }
+  }
+  sh.appendRow([key, value]);
+}
+
+function deleteWhere_(sheetName, test) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(sheetName);
+  const v = sh.getDataRange().getValues();
+  for (let i = v.length - 1; i >= 1; i--) if (test(v[i])) sh.deleteRow(i + 1);
 }

@@ -76,6 +76,32 @@ h1{font-size:1.5rem} h2{font-size:1.15rem}
 .guest-note p{margin:0;flex:1;min-width:200px;font-size:.9rem}
 .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem}
 .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.linkbtn{border:0;background:none;color:var(--blue);font-weight:600;cursor:pointer;justify-self:center;padding:4px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile b{display:block;font-size:1.5rem}
+.tile span{font-size:.82rem;color:var(--muted)}
+.tbl{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.tbl table{border-collapse:collapse;width:100%;min-width:520px;font-size:.9rem}
+.tbl th,.tbl td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.tbl th{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tbl .n{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr.click{cursor:pointer} .tbl tr.click:hover td{background:var(--blue-soft)}
+.tbl tr.hist td{background:var(--paper);font-size:.85rem}
+.tbl tr:last-child td{border-bottom:0}
+.meter{display:flex;align-items:center;gap:8px}
+.meter i{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden;min-width:60px}
+.meter i b{display:block;height:100%;border-radius:4px}
+.lo{background:var(--red)} .mid{background:var(--mark)} .hi{background:var(--green)}
+.msg{padding:10px 14px;border-radius:10px;font-weight:600}
+.msg.ok{background:var(--green-soft);color:var(--green)} .msg.no{background:var(--red-soft);color:var(--red)}
+.qrow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1.3fr) 36px;gap:6px}
+@media (max-width:560px){.qrow{grid-template-columns:minmax(0,1fr) 36px}.qrow .inp:nth-child(2),.qrow .inp:nth-child(3){grid-column:1}}
+.x{border:1px solid var(--line);background:var(--card);border-radius:8px;cursor:pointer;color:var(--muted)}
+.pin{font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:.1em}
+.formrow{display:flex;gap:8px;flex-wrap:wrap}
+.formrow .inp{flex:1;min-width:140px}
+label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
 .rank{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .rank b.r{color:var(--muted);text-align:right}
 .rank.me{border-color:var(--blue);background:var(--blue-soft)}
@@ -146,6 +172,8 @@ let data = null;          // усе з таблиці: клас, учні, тр�
 let me = null;            // { name, pin, xp, done }
 let tab = 'home';
 let game = null;          // поточний тренажер або урок
+let loginMode = 'student'; // 'student' або 'teacher' — яку форму входу показати
+let teacher = null;       // кабінет вчителя: { password, d, tab, open, showPins, confirm, builder, msg }
 
 /* ---------- режим гостя: бали лише в цьому браузері, у рейтинг не йдуть ---------- */
 function loadGuest() { try { return JSON.parse(localStorage.getItem('mb-guest') || 'null') || { xp: 0, done: [] }; } catch (e) { return { xp: 0, done: [] }; } }
@@ -173,7 +201,7 @@ async function withLoader(text, fn) {
 
 /* ---------- демо-режим, поки API_URL порожній ---------- */
 const DEMO = {
-  className: 'Демо-клас', xpPerAnswer: 10, guestMode: true,
+  className: 'Демо-клас', xpPerAnswer: 10, guestMode: true, password: 'вчитель',
   students: [{ name: 'Оля К.', pin: '1234' }, { name: 'Петро С.', pin: '5678' }],
   trainers: [{ name: 'Периметр і площа', questions: [
     { q: 'Периметр квадрата зі стороною 6 см', a: '24', wrong: [] },
@@ -183,7 +211,13 @@ const DEMO = {
     { text: 'Дріб показує, на скільки рівних частин поділили ціле (знаменник — нижнє число) і скільки частин узяли (чисельник — верхнє).', q: 'Піцу поділили на 8 шматків, з’їли 3. Який дріб піци з’їли?', a: '3/8' },
     { text: 'Щоб знайти дріб від числа, ділимо на знаменник і множимо на чисельник: 3/4 від 20 = 15.', q: 'Скільки буде 2/5 від 30?', a: '12' }] }],
 };
-function demoResults() { try { return JSON.parse(localStorage.getItem('mb-demo') || '[]'); } catch (e) { return []; } }
+const daysAgo = n => new Date(Date.now() - n * 864e5).toISOString();
+const DEMO_SEED = [ // приклад історії, щоб у демо-кабінеті вчителя було що показати
+  { date: daysAgo(2), name: 'Оля К.', trainer: 'Таблиця множення', correct: 9, total: 10, xp: 90 },
+  { date: daysAgo(1), name: 'Петро С.', trainer: 'Периметр і площа', correct: 1, total: 3, xp: 10 },
+  { date: daysAgo(0), name: 'Оля К.', trainer: 'Дроби', correct: 6, total: 10, xp: 60 },
+];
+function demoResults() { try { const v = localStorage.getItem('mb-demo'); return v ? JSON.parse(v) : DEMO_SEED; } catch (e) { return DEMO_SEED; } }
 function demoRating() {
   const xp = Object.fromEntries(DEMO.students.map(s => [s.name, 0]));
   demoResults().forEach(r => { if (r.name in xp) xp[r.name] += r.xp; });
@@ -193,12 +227,13 @@ async function demoApi(action, p) {
   await new Promise(r => setTimeout(r, 900)); // імітуємо затримку Google
   const ok = DEMO.students.some(s => s.name === p.name && s.pin === String(p.pin).trim());
   const info = name => ({ xp: demoRating().find(r => r.name === name)?.xp || 0, done: [...new Set(demoResults().filter(r => r.name === name).map(r => r.trainer))] });
-  if (action === 'init') return { ok: true, ...DEMO, students: DEMO.students.map(s => s.name), rating: demoRating() };
+  if (action === 'init') return { ok: true, ...DEMO, password: undefined, students: DEMO.students.map(s => s.name), rating: demoRating() };
+  if (action === 'teacher') return demoTeacher(p);
   if (!ok) return { ok: false, error: 'Неправильне ім’я або PIN' };
   if (action === 'login') return { ok: true, name: p.name, ...info(p.name) };
   if (action === 'result') {
     const xp = Math.min(p.correct, p.total) * DEMO.xpPerAnswer;
-    localStorage.setItem('mb-demo', JSON.stringify([...demoResults(), { name: p.name, trainer: p.trainer, xp }]));
+    localStorage.setItem('mb-demo', JSON.stringify([...demoResults(), { date: new Date().toISOString(), name: p.name, trainer: p.trainer, correct: Math.min(p.correct, p.total), total: p.total, xp }]));
     return { ok: true, gained: xp, ...info(p.name), rating: demoRating() };
   }
 }
@@ -213,13 +248,14 @@ function levelOf(xp) {
 /* ---------- екрани ---------- */
 function render() {
   $('#cls').textContent = data ? data.className : '';
-  $('#banner').innerHTML = API_URL ? '' : '<div class="banner"><b>Демо-режим.</b> Вставте адресу Apps Script у <code>API_URL</code>, щоб підключити Google Таблицю. Для входу: Оля К., PIN 1234 — або кнопка «Спробувати як гість».</div>';
-  $('#who').innerHTML = !me ? '' : me.guest
+  $('#banner').innerHTML = API_URL ? '' : '<div class="banner"><b>Демо-режим.</b> Вставте адресу Apps Script у <code>API_URL</code>, щоб підключити Google Таблицю. Учень: Оля К., PIN 1234. Вчитель: пароль «вчитель».</div>';
+  $('#who').innerHTML = teacher ? `<span class="guest-tag">Вчитель</span><button class="btn ghost sm" onclick="teacherLogout()">Вийти</button>` : !me ? '' : me.guest
     ? `<span class="guest-tag">Гість</span><button class="btn ghost sm" onclick="logout()">Увійти з PIN</button>`
     : `<span class="muted">${esc(me.name)}</span><button class="btn ghost sm" onclick="logout()">Вийти</button>`;
   const m = $('#main');
   if (!data) { m.innerHTML = ''; return; }
-  if (!me) { m.innerHTML = loginView(); return; }
+  if (teacher) { m.innerHTML = teacherView(); bindTeacher(); return; }
+  if (!me) { m.innerHTML = loginMode === 'teacher' ? teacherLoginView() : loginView(); return; }
   if (game) { m.innerHTML = game.done ? resultView() : gameView(); bindGame(); return; }
   const tabs = [['home', 'Головна'], ['trainers', 'Тренажери'], ['lessons', 'Уроки'], ['rating', 'Рейтинг']];
   m.innerHTML = `<div class="stack"><nav class="tabs">${tabs.map(([k, l]) => `<button class="tab ${tab === k ? 'on' : ''}" onclick="setTab('${k}')">${l}</button>`).join('')}</nav>
@@ -236,7 +272,8 @@ function loginView() {
     <button class="btn" onclick="login()">Увійти</button>
     ${data.guestMode ? `<div class="or"><span>або</span></div>
     <button class="btn ghost" onclick="enterGuest()">Спробувати як гість</button>
-    <p class="muted" style="margin:0;font-size:.85rem">Гість може проходити тренажери й уроки, але його бали не потрапляють у рейтинг класу.</p>` : ''}</div>`;
+    <p class="muted" style="margin:0;font-size:.85rem">Гість може проходити тренажери й уроки, але його бали не потрапляють у рейтинг класу.</p>` : ''}
+    <button class="linkbtn" onclick="loginMode='teacher';render()">Я вчитель →</button></div>`;
 }
 async function login() {
   const name = $('#name').value, pin = $('#pin').value.trim();
@@ -358,9 +395,212 @@ function resultView() {
 }
 function quit() { const back = game && game.lesson ? 'lessons' : 'trainers'; game = null; tab = back; render(); }
 
+/* ================= КАБІНЕТ ВЧИТЕЛЯ ================= */
+function teacherLoginView() {
+  return `<div class="card stack" style="max-width:420px;margin:30px auto">
+    <h1>Кабінет вчителя</h1><p class="muted">Пароль задається в таблиці, аркуш «Налаштування».</p>
+    <input class="inp" id="tpass" type="password" placeholder="Пароль вчителя" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')teacherLogin()">
+    <div class="err" id="err"></div>
+    <button class="btn" onclick="teacherLogin()">Увійти</button>
+    <button class="linkbtn" onclick="loginMode='student';render()">← Я учень</button></div>`;
+}
+async function teacherLogin(saved) {
+  const password = saved || $('#tpass').value.trim();
+  if (!password) { $('#err').textContent = 'Введіть пароль.'; return; }
+  const r = await withLoader('Відкриваю кабінет…', () => api('teacher', { password, op: 'login' }));
+  if (!r.ok) { if (saved) { sessionStorage.removeItem('mb-teacher'); render(); } else $('#err').textContent = r.error; return; }
+  teacher = { password, d: r, tab: 'overview', open: null, showPins: false, confirm: null, builder: newBuilder(), msg: null };
+  try { sessionStorage.setItem('mb-teacher', password); } catch (e) {} // лише до закриття вкладки
+  render();
+}
+async function teacherLogout() {
+  teacher = null; loginMode = 'student';
+  try { sessionStorage.removeItem('mb-teacher'); } catch (e) {}
+  data = await withLoader('Оновлюю дані…', () => api('init')); // зміни вчителя одразу видно учням
+  render();
+}
+async function tDo(op, payload, loaderText, okText) {
+  const r = await withLoader(loaderText, () => api('teacher', { password: teacher.password, op, ...payload }));
+  if (!r.ok) { teacher.msg = { ok: false, text: r.error }; render(); return false; }
+  teacher.d = r; teacher.confirm = null; teacher.msg = okText ? { ok: true, text: okText } : null;
+  render(); return true;
+}
+function tTab(t) { teacher.tab = t; teacher.msg = null; teacher.confirm = null; render(); }
+
+const dayKey = d => { const x = new Date(d); return isNaN(x) ? '' : x.toDateString(); };
+function fmtDate(d) {
+  const x = new Date(d); if (!d || isNaN(x)) return '—';
+  if (dayKey(x) === new Date().toDateString()) return 'сьогодні, ' + x.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+  return x.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+}
+function meter(pct) {
+  const cls = pct < 50 ? 'lo' : pct < 75 ? 'mid' : 'hi';
+  return `<span class="meter"><i><b class="${cls}" style="width:${pct}%"></b></i><span>${pct}%</span></span>`;
+}
+function tStats() {
+  const d = teacher.d, per = {};
+  d.students.forEach(s => per[s.name] = { name: s.name, xp: 0, attempts: 0, correct: 0, total: 0, last: '', hist: [] });
+  const topics = {};
+  d.results.forEach(r => {
+    const p = per[r.name]; if (!p) return; // результати видалених учнів не рахуємо
+    p.xp += r.xp; p.attempts++; p.correct += r.correct; p.total += r.total; p.hist.push(r);
+    if (r.date && (!p.last || new Date(r.date) > new Date(p.last))) p.last = r.date;
+    const t = topics[r.trainer] || (topics[r.trainer] = { name: r.trainer, attempts: 0, correct: 0, total: 0 });
+    t.attempts++; t.correct += r.correct; t.total += r.total;
+  });
+  const students = Object.values(per).sort((a, b) => b.xp - a.xp);
+  const pct = (c, t) => t ? Math.round(c / t * 100) : 0;
+  const today = new Date().toDateString();
+  const sumC = students.reduce((s, p) => s + p.correct, 0), sumT = students.reduce((s, p) => s + p.total, 0);
+  return {
+    students, pct,
+    topics: Object.values(topics).map(t => ({ ...t, pct: pct(t.correct, t.total) })).sort((a, b) => a.pct - b.pct),
+    activeToday: students.filter(p => dayKey(p.last) === today).length,
+    solved: sumC, accuracy: pct(sumC, sumT),
+  };
+}
+
+function teacherView() {
+  const tabs = [['overview', 'Огляд'], ['students', 'Учні'], ['trainers', 'Тренажери'], ['settings', 'Налаштування']];
+  const m = teacher.msg;
+  return `<div class="stack"><nav class="tabs">${tabs.map(([k, l]) => `<button class="tab ${teacher.tab === k ? 'on' : ''}" onclick="tTab('${k}')">${l}</button>`).join('')}</nav>
+    ${m ? `<div class="msg ${m.ok ? 'ok' : 'no'}">${esc(m.text)}</div>` : ''}
+    ${{ overview: tOverview, students: tStudents, trainers: tTrainers, settings: tSettings }[teacher.tab]()}</div>`;
+}
+
+function tOverview() {
+  const S = tStats();
+  const rows = S.students.map(p => {
+    const open = teacher.open === p.name;
+    const hist = open ? `<tr class="hist"><td colspan="6">${p.hist.length ? p.hist.slice(-15).reverse().map(r =>
+      `${fmtDate(r.date)} · <b>${esc(r.trainer)}</b> · ${r.correct}/${r.total} · +${r.xp} XP`).join('<br>') : 'Ще нічого не проходив.'}</td></tr>` : '';
+    return `<tr class="click" onclick="teacher.open=${open ? 'null' : esc(JSON.stringify(p.name))};render()">
+      <td>${open ? '▾' : '▸'} ${esc(p.name)}</td><td class="n">${p.xp}</td><td>${levelOf(p.xp).name}</td><td class="n">${p.attempts}</td>
+      <td>${p.total ? meter(S.pct(p.correct, p.total)) : '—'}</td><td>${fmtDate(p.last)}</td></tr>${hist}`;
+  }).join('');
+  return `<div class="tiles">
+      <div class="tile"><b>${S.students.length}</b><span>учнів у класі</span></div>
+      <div class="tile"><b>${S.activeToday}</b><span>займалися сьогодні</span></div>
+      <div class="tile"><b>${S.solved}</b><span>правильних відповідей</span></div>
+      <div class="tile"><b>${S.accuracy}%</b><span>середня точність</span></div></div>
+    <div class="top" style="margin:0"><h2>Учні</h2><div class="right"><button class="btn ghost sm" onclick="tDo('overview',{},'Оновлюю…')">Оновити</button></div></div>
+    <p class="muted" style="margin:-8px 0 0;font-size:.85rem">Натисніть на учня, щоб побачити його історію.</p>
+    ${S.students.length ? `<div class="tbl"><table><thead><tr><th>Учень</th><th class="n">XP</th><th>Рівень</th><th class="n">Спроб</th><th>Точність</th><th>Останній раз</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : '<p class="muted">Учнів ще немає. Додайте їх на вкладці «Учні».</p>'}
+    <h2>Найважчі теми</h2>
+    ${S.topics.length ? `<div class="tbl"><table><thead><tr><th>Тренажер або урок</th><th class="n">Спроб</th><th>Середній результат</th></tr></thead><tbody>
+      ${S.topics.map(t => `<tr><td>${esc(t.name)}</td><td class="n">${t.attempts}</td><td>${meter(t.pct)}</td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="muted">Тут з’явиться статистика, коли учні пройдуть перші тренажери.</p>'}`;
+}
+
+function tStudents() {
+  const st = teacher.d.students;
+  return `<div class="card stack"><h2>Додати учня</h2>
+      <div class="formrow"><input class="inp" id="sname" maxlength="40" placeholder="Ім’я та перша літера прізвища, напр. Оля К.">
+      <input class="inp" id="spin" inputmode="numeric" maxlength="6" placeholder="PIN (якщо порожньо — згенерується)" style="max-width:260px">
+      <button class="btn" onclick="addStudent()">Додати</button></div></div>
+    <div class="top" style="margin:0"><h2>Список класу (${st.length})</h2><div class="right">
+      <label class="chk"><input type="checkbox" ${teacher.showPins ? 'checked' : ''} onchange="teacher.showPins=this.checked;render()"> Показати PIN-коди</label></div></div>
+    <div class="list">${st.map(s => `<div class="item"><div class="grow"><b>${esc(s.name)}</b></div>
+      <span class="pin">${teacher.showPins ? esc(s.pin) : '••••'}</span>
+      ${teacher.confirm === 's:' + s.name
+        ? `<button class="btn sm" style="background:var(--red);border-color:var(--red)" onclick="tDo('deleteStudent',{name:${esc(JSON.stringify(s.name))}},'Видаляю…','Учня видалено')">Так, видалити</button><button class="btn ghost sm" onclick="teacher.confirm=null;render()">Ні</button>`
+        : `<button class="btn ghost sm" onclick="teacher.confirm=${esc(JSON.stringify('s:' + s.name))};render()">Видалити</button>`}</div>`).join('') || '<p class="muted">Поки порожньо.</p>'}</div>
+    <p class="muted" style="font-size:.85rem">PIN роздавайте кожному учневі особисто. Якщо учня видалити, його старі результати лишаться на аркуші «Результати», але зникнуть з рейтингу.</p>`;
+}
+async function addStudent() {
+  const name = $('#sname').value.trim(), pin = $('#spin').value.trim();
+  if (!name) { teacher.msg = { ok: false, text: 'Вкажіть ім’я учня.' }; render(); return; }
+  await tDo('addStudent', { name, pin }, 'Додаю учня…', `Учня «${name}» додано.`);
+  teacher.showPins = true; render(); // одразу видно PIN нового учня
+}
+
+function newBuilder() { return { name: '', rows: [{ q: '', a: '', wrong: '' }, { q: '', a: '', wrong: '' }, { q: '', a: '', wrong: '' }] }; }
+function readBuilder() {
+  const b = teacher.builder, n = $('#tname'); if (!n) return;
+  b.name = n.value;
+  b.rows = [...document.querySelectorAll('.qrow')].map(r => ({ q: r.children[0].value, a: r.children[1].value, wrong: r.children[2].value }));
+}
+function tTrainers() {
+  const b = teacher.builder, tr = teacher.d.trainers;
+  return `<div class="card stack"><h2>Новий тренажер</h2>
+      <input class="inp" id="tname" maxlength="60" placeholder="Назва, напр. Периметр і площа" value="${esc(b.name)}">
+      <div class="list">${b.rows.map((r, i) => `<div class="qrow">
+        <input class="inp" placeholder="Питання ${i + 1}" value="${esc(r.q)}">
+        <input class="inp" placeholder="Відповідь" value="${esc(r.a)}">
+        <input class="inp" placeholder="Хибні варіанти через кому" value="${esc(r.wrong)}">
+        <button class="x" onclick="readBuilder();teacher.builder.rows.splice(${i},1);render()" aria-label="Прибрати">×</button></div>`).join('')}</div>
+      <p class="muted" style="margin:0;font-size:.85rem">Хибні варіанти необов’язкові: якщо їх вказати, питання стане тестом із вибором. Кілька правильних відповідей пишіть через <b>|</b>, напр. <b>5|п’ять</b>.</p>
+      <div class="formrow"><button class="btn ghost" onclick="readBuilder();teacher.builder.rows.push({q:'',a:'',wrong:''});render()">+ Питання</button>
+        <span style="flex:1"></span><button class="btn" onclick="saveTrainer()">Опублікувати</button></div></div>
+    <h2>Тренажери класу (${tr.length})</h2>
+    <div class="list">${tr.map(t => `<div class="item"><div class="grow"><b>${esc(t.name)}</b><small>${t.questions.length} питань</small></div>
+      ${teacher.confirm === 't:' + t.name
+        ? `<button class="btn sm" style="background:var(--red);border-color:var(--red)" onclick="tDo('deleteTrainer',{name:${esc(JSON.stringify(t.name))}},'Видаляю…','Тренажер видалено')">Так, видалити</button><button class="btn ghost sm" onclick="teacher.confirm=null;render()">Ні</button>`
+        : `<button class="btn ghost sm" onclick="teacher.confirm=${esc(JSON.stringify('t:' + t.name))};render()">Видалити</button>`}</div>`).join('') || '<p class="muted">Ще немає тренажерів.</p>'}</div>
+    <p class="muted" style="font-size:.85rem">Уроки поки редагуються прямо в таблиці, на аркуші «Уроки».</p>`;
+}
+async function saveTrainer() {
+  readBuilder();
+  const b = teacher.builder, questions = b.rows.filter(r => r.q.trim() && r.a.trim());
+  if (!b.name.trim()) { teacher.msg = { ok: false, text: 'Вкажіть назву тренажера.' }; render(); return; }
+  if (!questions.length) { teacher.msg = { ok: false, text: 'Додайте хоча б одне питання з відповіддю.' }; render(); return; }
+  const name = b.name.trim();
+  if (await tDo('addTrainer', { name, questions }, 'Записую тренажер у таблицю…', `Тренажер «${name}» опубліковано.`)) { teacher.builder = newBuilder(); render(); }
+}
+
+function tSettings() {
+  const s = teacher.d.settings;
+  return `<div class="card stack" style="max-width:520px">
+    <label class="stack" style="gap:4px"><b>Назва класу</b><input class="inp" id="sClass" maxlength="40" value="${esc(s.className)}"></label>
+    <label class="stack" style="gap:4px"><b>XP за правильну відповідь</b><input class="inp" id="sXp" type="number" min="1" max="100" value="${s.xpPerAnswer}" style="max-width:120px"></label>
+    <label class="chk"><input type="checkbox" id="sGuest" ${s.guestMode ? 'checked' : ''}> Дозволити режим гостя</label>
+    <label class="stack" style="gap:4px"><b>Новий пароль вчителя</b><input class="inp" id="sPass" type="password" autocomplete="new-password" placeholder="Залиште порожнім, щоб не змінювати">
+      <span class="muted" style="font-size:.82rem">Щонайменше 6 символів.</span></label>
+    <div><button class="btn" onclick="saveSettings()">Зберегти</button></div></div>`;
+}
+async function saveSettings() {
+  const newPassword = $('#sPass').value.trim();
+  if (newPassword && newPassword.length < 6) { teacher.msg = { ok: false, text: 'Пароль має бути щонайменше 6 символів.' }; render(); return; }
+  const payload = { className: $('#sClass').value.trim(), xpPerAnswer: +$('#sXp').value || 10, guestMode: $('#sGuest').checked, newPassword };
+  if (await tDo('saveSettings', payload, 'Зберігаю…', 'Налаштування збережено.') && newPassword) {
+    teacher.password = newPassword; try { sessionStorage.setItem('mb-teacher', newPassword); } catch (e) {}
+  }
+}
+function bindTeacher() {}
+
+/* демо-версія кабінету (без таблиці) — зміни живуть до перезавантаження сторінки */
+function demoTeacher(p) {
+  if (p.password !== DEMO.password) return { ok: false, error: 'Неправильний пароль' };
+  const err = e => ({ ok: false, error: e });
+  if (p.op === 'addStudent') {
+    if (!p.name) return err('Вкажіть ім’я учня');
+    if (DEMO.students.some(s => s.name === p.name)) return err('Учень з таким ім’ям уже є');
+    if (p.pin && !/^\d{4,6}$/.test(p.pin)) return err('PIN — це 4–6 цифр');
+    DEMO.students.push({ name: p.name, pin: p.pin || String(ri(1000, 9999)) });
+  }
+  if (p.op === 'deleteStudent') DEMO.students = DEMO.students.filter(s => s.name !== p.name);
+  if (p.op === 'addTrainer') {
+    if (DEMO.trainers.some(t => t.name === p.name)) return err('Тренажер з такою назвою вже є');
+    DEMO.trainers.push({ name: p.name, questions: p.questions.map(q => ({ q: q.q, a: q.a, wrong: q.wrong.split(',').map(x => x.trim()).filter(Boolean) })) });
+  }
+  if (p.op === 'deleteTrainer') DEMO.trainers = DEMO.trainers.filter(t => t.name !== p.name);
+  if (p.op === 'saveSettings') {
+    if (p.className) DEMO.className = p.className;
+    DEMO.xpPerAnswer = p.xpPerAnswer; DEMO.guestMode = p.guestMode;
+    if (p.newPassword) DEMO.password = p.newPassword;
+  }
+  return { ok: true, settings: { className: DEMO.className, xpPerAnswer: DEMO.xpPerAnswer, guestMode: DEMO.guestMode },
+    students: DEMO.students, results: demoResults(), trainers: DEMO.trainers };
+}
+
 /* ---------- запуск ---------- */
 (async function start() {
   data = await withLoader('Відкриваю MathBook…', () => api('init'));
+  let tpass = null;
+  try { tpass = sessionStorage.getItem('mb-teacher'); } catch (e) {}
+  if (tpass) { await teacherLogin(tpass); if (teacher) return; }
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem('mb-me') || 'null'); } catch (e) {}
   if (saved && saved.guest && data.guestMode) me = { guest: true, name: 'Гість', ...loadGuest() };
