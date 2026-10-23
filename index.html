@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MathBook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Golos+Text:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#F5F7FC; --grid:rgba(52,84,200,.08); --card:#fff; --ink:#1A2140; --muted:#5A6384;
+  --line:#D8DEEE; --blue:#2646D4; --blue-soft:#E4E9FC; --green:#1B8A57; --green-soft:#DDF3E8;
+  --red:#D33F37; --red-soft:#FCE6E4; --mark:#FFE03D; --mark-ink:#3B3000;
+}
+@media (prefers-color-scheme: dark){:root{
+  --paper:#0F131D; --grid:rgba(130,150,255,.07); --card:#161B29; --ink:#E5E8F4; --muted:#98A1C0;
+  --line:#272F47; --blue:#8098FF; --blue-soft:#1E2747; --green:#4CC48A; --green-soft:#16302A;
+  --red:#FF6E64; --red-soft:#3A1E22; --mark:#F0CC2C; --mark-ink:#2A2200; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background-color:var(--paper);color:var(--ink);font:15px/1.5 "Golos Text",system-ui,sans-serif;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px}
+button,input{font:inherit;color:inherit}
+h1,h2,h3{font-family:"Unbounded","Golos Text",sans-serif;margin:0;line-height:1.2}
+h1{font-size:1.5rem} h2{font-size:1.15rem}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.brand{font-family:"Unbounded",sans-serif;font-weight:700;font-size:1.2rem;color:var(--blue)}
+.cls{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.top .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.stack{display:grid;gap:16px}
+.btn{border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:600}
+.btn:hover{background:var(--blue);border-color:var(--blue)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.sm{padding:6px 12px;font-size:.88rem}
+.btn:disabled{opacity:.4;cursor:default}
+.inp{width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px}
+.inp:focus{outline:none;border-color:var(--blue)}
+.muted{color:var(--muted)}
+.err{color:var(--red);font-weight:600;min-height:1.4em}
+.banner{background:var(--mark);color:var(--mark-ink);padding:10px 14px;border-radius:10px;font-size:.88rem;margin-bottom:16px}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:0;background:transparent;padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:600;color:var(--muted)}
+.tab.on{background:var(--ink);color:var(--paper)}
+
+.level{display:flex;align-items:center;gap:16px}
+.level .n{font-family:"Unbounded",sans-serif;font-size:2.4rem;color:var(--blue);line-height:1}
+.bar{height:10px;border-radius:6px;background:var(--blue-soft);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--blue);border-radius:6px;transition:width .6s}
+
+.list{display:grid;gap:8px}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;flex-wrap:wrap}
+.item .grow{flex:1;min-width:150px}
+.item small{display:block;color:var(--muted)}
+.tag{font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--green-soft);color:var(--green)}
+
+.qcard{background:var(--card);border:1.5px solid var(--ink);border-radius:18px;padding:26px 20px;display:grid;gap:16px;text-align:center;box-shadow:5px 5px 0 var(--ink)}
+.qnum{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.q{font-size:clamp(1.3rem,5vw,1.9rem);font-weight:700;overflow-wrap:anywhere}
+.text{text-align:left;background:var(--blue-soft);border-radius:12px;padding:14px 16px}
+.af{display:flex;gap:8px;max-width:400px;width:100%;margin:0 auto}
+.af .inp{flex:1;min-width:0;font-size:1.2rem;text-align:center}
+.inp.ok{border-color:var(--green);background:var(--green-soft)} .inp.no{border-color:var(--red);background:var(--red-soft)}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.choice{border:2px solid var(--line);background:var(--paper);border-radius:12px;padding:12px;cursor:pointer;font-weight:600}
+.choice.ok{border-color:var(--green);background:var(--green-soft)} .choice.no{border-color:var(--red);background:var(--red-soft)}
+.fb{font-weight:600;min-height:1.5em} .fb.ok{color:var(--green)} .fb.no{color:var(--red)}
+.dots{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
+.dots i{width:18px;height:7px;border-radius:4px;background:var(--line)}
+.dots i.ok{background:var(--green)} .dots i.no{background:var(--red)}
+.big{font-family:"Unbounded",sans-serif;font-size:3rem;color:var(--blue);line-height:1}
+.xp{display:inline-block;background:var(--mark);color:var(--mark-ink);font-weight:700;padding:3px 10px;border-radius:8px}
+
+.guest-tag{font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--mark);color:var(--mark-ink)}
+.guest-note{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1.5px dashed var(--line);border-radius:12px;padding:12px 14px;background:var(--card)}
+.guest-note p{margin:0;flex:1;min-width:200px;font-size:.9rem}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.rank{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.rank b.r{color:var(--muted);text-align:right}
+.rank.me{border-color:var(--blue);background:var(--blue-soft)}
+.rank.top1 b.r{color:var(--mark-ink);background:var(--mark);border-radius:6px;text-align:center}
+
+/* анімація завантаження: символи «підстрибують», поки скрипт працює */
+.loader{position:fixed;inset:0;background:color-mix(in srgb,var(--paper) 85%,transparent);display:grid;place-items:center;z-index:10}
+.loader[hidden]{display:none}
+.loader .box{display:grid;justify-items:center;gap:14px}
+.syms{display:flex;gap:10px}
+.syms span{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font:700 1.4rem "Unbounded",sans-serif;background:var(--ink);color:var(--paper);animation:hop 1s ease-in-out infinite}
+.syms span:nth-child(2){animation-delay:.15s;background:var(--blue)}
+.syms span:nth-child(3){animation-delay:.3s;background:var(--mark);color:var(--mark-ink)}
+.syms span:nth-child(4){animation-delay:.45s}
+@keyframes hop{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-16px)}}
+.loader p{font-weight:600;margin:0}
+@media (prefers-reduced-motion:reduce){.syms span{animation-duration:3s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="brand">MathBook</span><span class="cls" id="cls"></span>
+    <div class="right" id="who"></div>
+  </header>
+  <div id="banner"></div>
+  <main id="main"></main>
+</div>
+<div class="loader" id="loader" hidden><div class="box"><div class="syms"><span>+</span><span>−</span><span>×</span><span>=</span></div><p id="loaderText">Завантаження…</p></div></div>
+
+<script>
+/* ===== НАЛАШТУВАННЯ: вставте сюди адресу веб-застосунку Apps Script ===== */
+const API_URL = '';
+/* ======================================================================= */
+
+const LEVELS = [[0,'Новачок'],[100,'Учень'],[300,'Знавець'],[600,'Майстер'],[1000,'Експерт'],[1500,'Піфагор']];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ri = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* ---------- перевірка відповіді: 0,5 = 0.5 = 1/2 ---------- */
+function toNum(s) {
+  s = String(s).trim().replace(/\s+/g, '').replace(/,/g, '.').replace(/[−–]/g, '-');
+  const m = s.match(/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/);
+  if (m) return +m[2] ? +m[1] / +m[2] : NaN;
+  return /^-?(\d+\.?\d*|\.\d+)$/.test(s) ? +s : NaN;
+}
+function isRight(given, answer) {
+  return String(answer).split('|').some(alt => {
+    const a = toNum(alt), b = toNum(given);
+    if (!isNaN(a) && !isNaN(b)) return Math.abs(a - b) < 1e-9;
+    return given.trim().toLowerCase() === alt.trim().toLowerCase();
+  });
+}
+const firstAnswer = a => String(a).split('|')[0].trim();
+
+/* ---------- вбудовані генератори прикладів ---------- */
+const GENERATORS = {
+  'Усний рахунок': () => { const a = ri(10, 90), b = ri(5, 60); return Math.random() < .5 && a > b ? { q: `${a} − ${b} = ?`, a: String(a - b) } : { q: `${a} + ${b} = ?`, a: String(a + b) }; },
+  'Таблиця множення': () => { const a = ri(2, 10), b = ri(2, 10); return Math.random() < .3 ? { q: `${a * b} : ${a} = ?`, a: String(b) } : { q: `${a} × ${b} = ?`, a: String(a * b) }; },
+  'Дроби': () => { const d = [2, 3, 4, 5, 10][ri(0, 4)], n = ri(1, d - 1), k = ri(2, 8); return { q: `${n}/${d} від ${d * k} = ?`, a: String(n * k) }; },
+  'Рівняння': () => { const x = ri(1, 12), a = ri(1, 5), b = ri(1, 15); return { q: `${a === 1 ? '' : a}x + ${b} = ${a * x + b}.  x = ?`, a: String(x) }; },
+};
+
+/* ---------- стан ---------- */
+let data = null;          // усе з таблиці: клас, учні, тренажери, уроки, рейтинг
+let me = null;            // { name, pin, xp, done }
+let tab = 'home';
+let game = null;          // поточний тренажер або урок
+
+/* ---------- режим гостя: бали лише в цьому браузері, у рейтинг не йдуть ---------- */
+function loadGuest() { try { return JSON.parse(localStorage.getItem('mb-guest') || 'null') || { xp: 0, done: [] }; } catch (e) { return { xp: 0, done: [] }; } }
+function saveGuest() { try { localStorage.setItem('mb-guest', JSON.stringify({ xp: me.xp, done: me.done })); } catch (e) {} }
+function enterGuest() {
+  me = { guest: true, name: 'Гість', ...loadGuest() };
+  try { localStorage.setItem('mb-me', JSON.stringify({ guest: true })); } catch (e) {}
+  render();
+}
+
+/* ---------- зв'язок із таблицею ---------- */
+async function api(action, payload = {}) {
+  if (!API_URL) return demoApi(action, payload);
+  if (action === 'init') return (await fetch(API_URL + '?action=init')).json();
+  // text/plain (за замовчуванням) — щоб Google не вимагав додаткових дозволів CORS
+  return (await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action, ...payload }) })).json();
+}
+async function withLoader(text, fn) {
+  $('#loaderText').textContent = text;
+  $('#loader').hidden = false;
+  try { return await fn(); }
+  catch (e) { alert('Немає зв’язку з таблицею. Перевірте інтернет і спробуйте ще раз.'); throw e; }
+  finally { $('#loader').hidden = true; }
+}
+
+/* ---------- демо-режим, поки API_URL порожній ---------- */
+const DEMO = {
+  className: 'Демо-клас', xpPerAnswer: 10, guestMode: true,
+  students: [{ name: 'Оля К.', pin: '1234' }, { name: 'Петро С.', pin: '5678' }],
+  trainers: [{ name: 'Периметр і площа', questions: [
+    { q: 'Периметр квадрата зі стороною 6 см', a: '24', wrong: [] },
+    { q: 'Площа прямокутника 4 см × 7 см', a: '28', wrong: ['22', '11', '47'] },
+    { q: 'Скільки см² в 1 дм²?', a: '100', wrong: ['10', '1000'] }] }],
+  lessons: [{ name: 'Що таке дріб', steps: [
+    { text: 'Дріб показує, на скільки рівних частин поділили ціле (знаменник — нижнє число) і скільки частин узяли (чисельник — верхнє).', q: 'Піцу поділили на 8 шматків, з’їли 3. Який дріб піци з’їли?', a: '3/8' },
+    { text: 'Щоб знайти дріб від числа, ділимо на знаменник і множимо на чисельник: 3/4 від 20 = 15.', q: 'Скільки буде 2/5 від 30?', a: '12' }] }],
+};
+function demoResults() { try { return JSON.parse(localStorage.getItem('mb-demo') || '[]'); } catch (e) { return []; } }
+function demoRating() {
+  const xp = Object.fromEntries(DEMO.students.map(s => [s.name, 0]));
+  demoResults().forEach(r => { if (r.name in xp) xp[r.name] += r.xp; });
+  return Object.entries(xp).map(([name, xp]) => ({ name, xp })).sort((a, b) => b.xp - a.xp);
+}
+async function demoApi(action, p) {
+  await new Promise(r => setTimeout(r, 900)); // імітуємо затримку Google
+  const ok = DEMO.students.some(s => s.name === p.name && s.pin === String(p.pin).trim());
+  const info = name => ({ xp: demoRating().find(r => r.name === name)?.xp || 0, done: [...new Set(demoResults().filter(r => r.name === name).map(r => r.trainer))] });
+  if (action === 'init') return { ok: true, ...DEMO, students: DEMO.students.map(s => s.name), rating: demoRating() };
+  if (!ok) return { ok: false, error: 'Неправильне ім’я або PIN' };
+  if (action === 'login') return { ok: true, name: p.name, ...info(p.name) };
+  if (action === 'result') {
+    const xp = Math.min(p.correct, p.total) * DEMO.xpPerAnswer;
+    localStorage.setItem('mb-demo', JSON.stringify([...demoResults(), { name: p.name, trainer: p.trainer, xp }]));
+    return { ok: true, gained: xp, ...info(p.name), rating: demoRating() };
+  }
+}
+
+/* ---------- рівні ---------- */
+function levelOf(xp) {
+  let i = 0; while (i + 1 < LEVELS.length && xp >= LEVELS[i + 1][0]) i++;
+  const next = LEVELS[i + 1];
+  return { n: i + 1, name: LEVELS[i][1], next, pct: next ? (xp - LEVELS[i][0]) / (next[0] - LEVELS[i][0]) : 1 };
+}
+
+/* ---------- екрани ---------- */
+function render() {
+  $('#cls').textContent = data ? data.className : '';
+  $('#banner').innerHTML = API_URL ? '' : '<div class="banner"><b>Демо-режим.</b> Вставте адресу Apps Script у <code>API_URL</code>, щоб підключити Google Таблицю. Для входу: Оля К., PIN 1234 — або кнопка «Спробувати як гість».</div>';
+  $('#who').innerHTML = !me ? '' : me.guest
+    ? `<span class="guest-tag">Гість</span><button class="btn ghost sm" onclick="logout()">Увійти з PIN</button>`
+    : `<span class="muted">${esc(me.name)}</span><button class="btn ghost sm" onclick="logout()">Вийти</button>`;
+  const m = $('#main');
+  if (!data) { m.innerHTML = ''; return; }
+  if (!me) { m.innerHTML = loginView(); return; }
+  if (game) { m.innerHTML = game.done ? resultView() : gameView(); bindGame(); return; }
+  const tabs = [['home', 'Головна'], ['trainers', 'Тренажери'], ['lessons', 'Уроки'], ['rating', 'Рейтинг']];
+  m.innerHTML = `<div class="stack"><nav class="tabs">${tabs.map(([k, l]) => `<button class="tab ${tab === k ? 'on' : ''}" onclick="setTab('${k}')">${l}</button>`).join('')}</nav>
+    ${{ home: homeView, trainers: trainersView, lessons: lessonsView, rating: ratingView }[tab]()}</div>`;
+}
+function setTab(t) { tab = t; render(); }
+
+function loginView() {
+  return `<div class="card stack" style="max-width:420px;margin:30px auto">
+    <h1>Привіт!</h1><p class="muted">Обери своє ім’я і введи PIN, який дав учитель.</p>
+    <select class="inp" id="name"><option value="">— Твоє ім’я —</option>${data.students.map(s => `<option>${esc(s)}</option>`).join('')}</select>
+    <input class="inp" id="pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off">
+    <div class="err" id="err"></div>
+    <button class="btn" onclick="login()">Увійти</button>
+    ${data.guestMode ? `<div class="or"><span>або</span></div>
+    <button class="btn ghost" onclick="enterGuest()">Спробувати як гість</button>
+    <p class="muted" style="margin:0;font-size:.85rem">Гість може проходити тренажери й уроки, але його бали не потрапляють у рейтинг класу.</p>` : ''}</div>`;
+}
+async function login() {
+  const name = $('#name').value, pin = $('#pin').value.trim();
+  if (!name || !pin) { $('#err').textContent = 'Обери ім’я і введи PIN.'; return; }
+  const r = await withLoader('Шукаю твою книжку…', () => api('login', { name, pin }));
+  if (!r.ok) { $('#err').textContent = r.error; return; }
+  me = { name, pin, xp: r.xp, done: r.done };
+  localStorage.setItem('mb-me', JSON.stringify({ name, pin }));
+  render();
+}
+function logout() { me = null; game = null; localStorage.removeItem('mb-me'); render(); }
+
+function guestNote() {
+  return `<div class="guest-note"><p><b>Режим гостя.</b> Бали зберігаються лише на цьому пристрої й не йдуть у рейтинг. Щоб змагатися з класом, попроси в учителя свій PIN.</p><button class="btn sm" onclick="logout()">Увійти з PIN</button></div>`;
+}
+function homeView() {
+  const L = levelOf(me.xp), place = me.guest ? 0 : data.rating.findIndex(r => r.name === me.name) + 1;
+  return `${me.guest ? guestNote() : ''}<div class="card"><div class="level"><div class="n">${L.n}</div><div><h2>${L.name}</h2><div class="muted">${me.xp} XP${place ? ` · ${place}-е місце в класі` : ''}</div></div></div>
+      <div class="bar"><i style="width:${Math.round(L.pct * 100)}%"></i></div>
+      <p class="muted" style="margin:8px 0 0">${L.next ? `Ще ${L.next[0] - me.xp} XP до рівня «${L.next[1]}»` : 'Найвищий рівень!'}</p></div>
+    <div class="list">
+      <div class="item"><div class="grow"><b>Тренажери</b><small>За кожну правильну відповідь — ${data.xpPerAnswer} XP</small></div><button class="btn sm" onclick="setTab('trainers')">Тренуватися</button></div>
+      <div class="item"><div class="grow"><b>Уроки</b><small>Пояснення з питаннями крок за кроком</small></div><button class="btn sm" onclick="setTab('lessons')">Вчитися</button></div>
+    </div>`;
+}
+function trainersView() {
+  const fromTeacher = data.trainers.map((t, i) => `<div class="item"><div class="grow"><b>${esc(t.name)}</b><small>${t.questions.length} питань від учителя</small></div>
+    ${me.done.includes(t.name) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startTrainer(${i})">Почати</button></div>`).join('');
+  const gens = Object.keys(GENERATORS).map(g => `<div class="item"><div class="grow"><b>${g}</b><small>10 нових прикладів щоразу</small></div><button class="btn sm ghost" onclick="startGen('${g}')">Почати</button></div>`).join('');
+  return `<h2>Від учителя</h2><div class="list">${fromTeacher || '<p class="muted">Учитель ще не додав тренажерів.</p>'}</div><h2>Генератори прикладів</h2><div class="list">${gens}</div>`;
+}
+function lessonsView() {
+  return `<h2>Уроки</h2><div class="list">${data.lessons.map((l, i) => `<div class="item"><div class="grow"><b>${esc(l.name)}</b><small>${l.steps.length} кроків</small></div>
+    ${me.done.includes('Урок: ' + l.name) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startLesson(${i})">Відкрити</button></div>`).join('') || '<p class="muted">Уроків поки немає.</p>'}</div>`;
+}
+function ratingView() {
+  return `${me.guest ? guestNote() : ''}<div class="top" style="margin:0"><h2>Рейтинг класу</h2><div class="right"><button class="btn ghost sm" onclick="refresh()">Оновити</button></div></div>
+    <div class="list">${data.rating.map((r, i) => `<div class="rank ${r.name === me.name ? 'me' : ''} ${i === 0 && r.xp > 0 ? 'top1' : ''}"><b class="r">${i + 1}</b><span>${esc(r.name)}${r.name === me.name ? ' (ти)' : ''} <small class="muted">· ${levelOf(r.xp).name}</small></span><b>${r.xp} XP</b></div>`).join('')}</div>`;
+}
+async function refresh() { data = await withLoader('Оновлюю рейтинг…', () => api('init')); render(); }
+
+/* ---------- тренажер і урок ---------- */
+function startTrainer(i) {
+  const t = data.trainers[i];
+  game = { title: t.name, items: shuffle(t.questions.map(q => ({ ...q, choices: q.wrong.length ? shuffle([firstAnswer(q.a), ...q.wrong]) : null }))), i: 0, results: [] };
+  render();
+}
+function startGen(name) {
+  game = { title: name, items: Array.from({ length: 10 }, GENERATORS[name]), i: 0, results: [] };
+  render();
+}
+function startLesson(i) {
+  const l = data.lessons[i];
+  game = { title: 'Урок: ' + l.name, lesson: true, items: l.steps.map(s => ({ text: s.text, q: s.q, a: s.a })), i: 0, results: [] };
+  render();
+}
+function gameView() {
+  const it = game.items[game.i];
+  return `<div class="stack"><div class="top" style="margin:0"><button class="btn ghost sm" onclick="quit()">← Назад</button><b>${esc(game.title)}</b></div>
+    <div class="dots">${game.items.map((_, k) => `<i class="${game.results[k] === true ? 'ok' : game.results[k] === false ? 'no' : ''}"></i>`).join('')}</div>
+    <div class="qcard"><div class="qnum">${game.lesson ? 'Крок' : 'Питання'} ${game.i + 1} з ${game.items.length}</div>
+      ${it.text ? `<div class="text">${esc(it.text)}</div>` : ''}
+      <div class="q">${esc(it.q)}</div>
+      ${it.choices ? `<div class="choices">${it.choices.map(c => `<button class="choice">${esc(c)}</button>`).join('')}</div>`
+        : `<form class="af" id="af"><input class="inp" id="ans" autocomplete="off" placeholder="Відповідь"><button class="btn">OK</button></form>`}
+      <div class="fb" id="fb"></div>
+      <div><button class="btn" id="next" hidden onclick="next()">${game.i + 1 < game.items.length ? 'Далі →' : 'Завершити'}</button></div></div></div>`;
+}
+function bindGame() {
+  if (game.done) return;
+  const it = game.items[game.i];
+  const af = $('#af');
+  if (af) { $('#ans').focus(); af.onsubmit = e => { e.preventDefault(); const v = $('#ans').value; if (v.trim()) answer(v); }; }
+  document.querySelectorAll('.choice').forEach(b => b.onclick = () => answer(b.textContent, b));
+}
+function answer(value, btn) {
+  if (game.results[game.i] !== undefined && !game.lesson) return;
+  const it = game.items[game.i], ok = isRight(value, it.a), fb = $('#fb');
+  if (game.lesson && !ok) { // в уроці можна пробувати ще, поки не вийде
+    fb.textContent = 'Ще не так. Перечитай пояснення і спробуй ще раз.'; fb.className = 'fb no';
+    if (btn) btn.classList.add('no'); else $('#ans').classList.add('no');
+    if (game.results[game.i] === undefined) game.results[game.i] = false;
+    return;
+  }
+  if (game.results[game.i] === undefined) game.results[game.i] = ok;
+  fb.textContent = ok ? 'Правильно!' : `Ні. Правильна відповідь: ${firstAnswer(it.a)}`; fb.className = 'fb ' + (ok ? 'ok' : 'no');
+  if (btn) { btn.classList.add(ok ? 'ok' : 'no'); document.querySelectorAll('.choice').forEach(b => b.disabled = true); }
+  else { $('#ans').className = 'inp ' + (ok ? 'ok' : 'no'); $('#ans').disabled = true; }
+  $('#next').hidden = false; $('#next').focus();
+}
+async function next() {
+  if (game.i + 1 < game.items.length) { game.i++; render(); return; }
+  const correct = game.results.filter(Boolean).length, total = game.items.length;
+  const before = levelOf(me.xp).n;
+  if (me.guest) {
+    const gained = correct * data.xpPerAnswer;
+    me.xp += gained;
+    if (!me.done.includes(game.title)) me.done.push(game.title);
+    saveGuest();
+    game.done = { correct, total, gained, levelUp: levelOf(me.xp).n > before };
+    render();
+    return;
+  }
+  const r = await withLoader('Записую результат у журнал…', () => api('result', { name: me.name, pin: me.pin, trainer: game.title, correct, total }));
+  if (!r.ok) { alert(r.error); return; }
+  me.xp = r.xp; me.done = r.done; data.rating = r.rating;
+  game.done = { correct, total, gained: r.gained, levelUp: levelOf(me.xp).n > before };
+  render();
+}
+function resultView() {
+  const d = game.done;
+  return `<div class="qcard"><div class="qnum">${esc(game.title)}</div>
+    <div class="big">${d.correct}/${d.total}</div>
+    <h2>${d.correct === d.total ? 'Бездоганно!' : d.correct / d.total >= .7 ? 'Добра робота!' : 'Варто потренуватися ще'}</h2>
+    <div><span class="xp">+${d.gained} XP</span></div>
+    ${d.levelUp ? `<p><b>Новий рівень: ${levelOf(me.xp).name}!</b></p>` : ''}
+    ${me.guest ? '<p class="muted" style="margin:0">Ти в режимі гостя, тому бали не записані в рейтинг класу.</p>' : ''}
+    <div><button class="btn" onclick="quit()">Готово</button></div></div>`;
+}
+function quit() { const back = game && game.lesson ? 'lessons' : 'trainers'; game = null; tab = back; render(); }
+
+/* ---------- запуск ---------- */
+(async function start() {
+  data = await withLoader('Відкриваю MathBook…', () => api('init'));
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem('mb-me') || 'null'); } catch (e) {}
+  if (saved && saved.guest && data.guestMode) me = { guest: true, name: 'Гість', ...loadGuest() };
+  else if (saved && data.students.includes(saved.name)) {
+    const r = await withLoader('Шукаю твою книжку…', () => api('login', saved));
+    if (r.ok) me = { ...saved, xp: r.xp, done: r.done };
+  }
+  render();
+})();
+</script>
+</body>
+</html>
