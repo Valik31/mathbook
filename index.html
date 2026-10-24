@@ -409,7 +409,14 @@ async function teacherLogin(saved) {
   const password = saved || $('#tpass').value.trim();
   if (!password) { $('#err').textContent = 'Введіть пароль.'; return; }
   const r = await withLoader('Відкриваю кабінет…', () => api('teacher', { password, op: 'login' }));
-  if (!r.ok) { if (saved) { sessionStorage.removeItem('mb-teacher'); render(); } else $('#err').textContent = r.error; return; }
+  if (!r.ok) {
+    if (saved) { sessionStorage.removeItem('mb-teacher'); render(); return; }
+    // стара версія скрипта не знає дії 'teacher' — підказуємо, як оновити розгортання
+    $('#err').textContent = r.error === 'Невідома дія'
+      ? 'Скрипт у Google ще старої версії. В Apps Script: Розгорнути → Керувати розгортаннями → ✏️ → Версія: «Нова версія» → Розгорнути.'
+      : r.error;
+    return;
+  }
   teacher = { password, d: r, tab: 'overview', open: null, showPins: false, confirm: null, builder: newBuilder(), msg: null };
   try { sessionStorage.setItem('mb-teacher', password); } catch (e) {} // лише до закриття вкладки
   render();
