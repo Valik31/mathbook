@@ -102,6 +102,19 @@ h1{font-size:1.5rem} h2{font-size:1.15rem}
 .formrow{display:flex;gap:8px;flex-wrap:wrap}
 .formrow .inp{flex:1;min-width:140px}
 label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
+.eqn{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 10px;font-size:1.7rem;font-weight:700}
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle}
+.fr>span{padding:1px 10px;line-height:1.2}
+.fr>:first-child{border-bottom:3px solid var(--ink);padding-bottom:4px}
+.fr>:last-child{padding-top:4px}
+.fr input{width:2.6em;font:inherit;font-size:1.35rem;text-align:center;border:2px solid var(--line);border-radius:8px;padding:3px;background:var(--paper);margin:3px 0}
+.fr input:focus{outline:none;border-color:var(--blue)}
+.fr input.no{border-color:var(--red);background:var(--red-soft)} .fr input.ok{border-color:var(--green);background:var(--green-soft)}
+.eqn .op{color:var(--muted)}
+.fb .fr{font-size:1.05rem} .fb small{color:var(--muted);font-weight:500}
+.fb.warn{color:#B86E00}
+@media (prefers-color-scheme: dark){.fb.warn{color:var(--mark)}}
+@media (max-width:480px){.eqn{font-size:1.3rem}.fr input{width:2.3em;font-size:1.1rem}}
 .rank{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .rank b.r{color:var(--muted);text-align:right}
 .rank.me{border-color:var(--blue);background:var(--blue-soft)}
@@ -165,6 +178,59 @@ const GENERATORS = {
   'Таблиця множення': () => { const a = ri(2, 10), b = ri(2, 10); return Math.random() < .3 ? { q: `${a * b} : ${a} = ?`, a: String(b) } : { q: `${a} × ${b} = ?`, a: String(a * b) }; },
   'Дроби': () => { const d = [2, 3, 4, 5, 10][ri(0, 4)], n = ri(1, d - 1), k = ri(2, 8); return { q: `${n}/${d} від ${d * k} = ?`, a: String(n * k) }; },
   'Рівняння': () => { const x = ri(1, 12), a = ri(1, 5), b = ri(1, 15); return { q: `${a === 1 ? '' : a}x + ${b} = ${a * x + b}.  x = ?`, a: String(x) }; },
+};
+
+/* ---------- тренажери з дробами: введення чисельника й знаменника, перевірка по кроках ---------- */
+const gcdI = (a, b) => b ? gcdI(b, a % b) : Math.abs(a);
+const F = (n, d) => `<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+const inp = label => `<input inputmode="numeric" autocomplete="off" placeholder="?" aria-label="${label}">`;
+function irreducible() { let n, d; do { n = ri(1, 9); d = ri(2, 10); } while (n >= d || gcdI(n, d) !== 1); return [n, d]; }
+
+const FRACTION_TRAINERS = {
+  'Скорочення дробів': {
+    hint: 'Скороти дріб до кінця: поділи чисельник і знаменник на їхній найбільший спільний дільник.',
+    make() { const [n, d] = irreducible(), m = ri(2, 9); return { n, d, N: n * m, D: d * m }; },
+    view: t => `${F(t.N, t.D)}<span class="op">=</span><span class="fr">${inp('чисельник')}${inp('знаменник')}</span>`,
+    check(t, [a, b]) {
+      if (a === t.n && b === t.d) return { ok: true };
+      if (b && a * t.D === b * t.N) return { soft: true, msg: 'Дріб правильний, але його можна скоротити ще!' };
+      return { msg: 'Неправильно. Спробуй ще раз!', bad: [0, 1] };
+    },
+    solution: t => `${F(t.N, t.D)} = ${F(t.n, t.d)} <small>(ділимо на ${t.N / t.n})</small>`,
+  },
+  'Зведення до нового знаменника': {
+    hint: 'Знайди додатковий множник і помнож на нього чисельник.',
+    make() { const [n, d] = irreducible(), m = ri(2, 10); return { n, d, m, T: d * m }; },
+    view: t => `${F(t.n, t.d)}<span class="op">=</span><span class="fr">${inp('чисельник')}<span>${t.T}</span></span>`,
+    check: (t, [a]) => a === t.n * t.m ? { ok: true } : { msg: `Подумай ще! Додатковий множник: ${t.m}`, bad: [0] },
+    solution: t => `${F(t.n, t.d)} = ${F(t.n * t.m, t.T)} <small>(множник ${t.m})</small>`,
+  },
+  'Додавання і віднімання дробів': {
+    hint: 'Зведи дроби до найменшого спільного знаменника, а потім виконай дію.',
+    make() {
+      let d1, d2, n1, n2, op;
+      do {
+        d1 = ri(2, 9); do d2 = ri(2, 9); while (d2 === d1);
+        n1 = ri(1, d1 - 1); n2 = ri(1, d2 - 1); op = Math.random() < .5 ? '+' : '−';
+        if (op === '−' && n1 / d1 < n2 / d2) { [n1, n2] = [n2, n1]; [d1, d2] = [d2, d1]; } // результат додатний
+      } while (op === '−' && n1 * d2 === n2 * d1);
+      const l = d1 * d2 / gcdI(d1, d2), c1 = n1 * l / d1, c2 = n2 * l / d2;
+      return { n1, d1, n2, d2, op, l, c1, c2, r: op === '+' ? c1 + c2 : c1 - c2 };
+    },
+    view: t => `${F(t.n1, t.d1)}<span class="op">${t.op}</span>${F(t.n2, t.d2)}<span class="op">=</span>
+      <span class="fr">${inp('чисельник першого дробу')}${inp('спільний знаменник')}</span><span class="op">${t.op}</span>
+      <span class="fr">${inp('чисельник другого дробу')}${inp('спільний знаменник')}</span><span class="op">=</span>
+      <span class="fr">${inp('чисельник результату')}${inp('знаменник результату')}</span>`,
+    check(t, [a1, b1, a2, b2, rn, rd]) {
+      if (b1 !== t.l || b2 !== t.l) return { msg: 'Знайди найменший спільний знаменник!', bad: [1, 3] };
+      if (a1 !== t.c1) return { msg: 'Неправильний чисельник першого дробу.', bad: [0] };
+      if (a2 !== t.c2) return { msg: 'Неправильний чисельник другого дробу.', bad: [2] };
+      if (rd && rn * t.l === t.r * rd) return { ok: true }; // можна скорочений або нескорочений
+      return { msg: t.op === '+' ? 'Помилка в додаванні чисельників.' : 'Помилка у відніманні чисельників.', bad: [4, 5] };
+    },
+    solution: t => { const g = gcdI(t.r, t.l);
+      return `${F(t.n1, t.d1)} ${t.op} ${F(t.n2, t.d2)} = ${F(t.c1, t.l)} ${t.op} ${F(t.c2, t.l)} = ${F(t.r, t.l)}${g > 1 ? ` = ${F(t.r / g, t.l / g)}` : ''}`; },
+  },
 };
 
 /* ---------- стан ---------- */
@@ -303,7 +369,11 @@ function trainersView() {
   const fromTeacher = data.trainers.map((t, i) => `<div class="item"><div class="grow"><b>${esc(t.name)}</b><small>${t.questions.length} питань від учителя</small></div>
     ${me.done.includes(t.name) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startTrainer(${i})">Почати</button></div>`).join('');
   const gens = Object.keys(GENERATORS).map(g => `<div class="item"><div class="grow"><b>${g}</b><small>10 нових прикладів щоразу</small></div><button class="btn sm ghost" onclick="startGen('${g}')">Почати</button></div>`).join('');
-  return `<h2>Від учителя</h2><div class="list">${fromTeacher || '<p class="muted">Учитель ще не додав тренажерів.</p>'}</div><h2>Генератори прикладів</h2><div class="list">${gens}</div>`;
+  const fracs = Object.entries(FRACTION_TRAINERS).map(([name, T]) => `<div class="item"><div class="grow"><b>${name}</b><small>${T.hint}</small></div>
+    ${me.done.includes(name) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startFrac('${name}')">Почати</button></div>`).join('');
+  return `<h2>Від учителя</h2><div class="list">${fromTeacher || '<p class="muted">Учитель ще не додав тренажерів.</p>'}</div>
+    <h2>Дроби</h2><div class="list">${fracs}</div>
+    <h2>Генератори прикладів</h2><div class="list">${gens}</div>`;
 }
 function lessonsView() {
   return `<h2>Уроки</h2><div class="list">${data.lessons.map((l, i) => `<div class="item"><div class="grow"><b>${esc(l.name)}</b><small>${l.steps.length} кроків</small></div>
@@ -325,6 +395,10 @@ function startGen(name) {
   game = { title: name, items: Array.from({ length: 10 }, GENERATORS[name]), i: 0, results: [] };
   render();
 }
+function startFrac(name) {
+  game = { title: name, frac: FRACTION_TRAINERS[name], items: Array.from({ length: 10 }, () => FRACTION_TRAINERS[name].make()), i: 0, results: [] };
+  render();
+}
 function startLesson(i) {
   const l = data.lessons[i];
   game = { title: 'Урок: ' + l.name, lesson: true, items: l.steps.map(s => ({ text: s.text, q: s.q, a: s.a })), i: 0, results: [] };
@@ -335,15 +409,19 @@ function gameView() {
   return `<div class="stack"><div class="top" style="margin:0"><button class="btn ghost sm" onclick="quit()">← Назад</button><b>${esc(game.title)}</b></div>
     <div class="dots">${game.items.map((_, k) => `<i class="${game.results[k] === true ? 'ok' : game.results[k] === false ? 'no' : ''}"></i>`).join('')}</div>
     <div class="qcard"><div class="qnum">${game.lesson ? 'Крок' : 'Питання'} ${game.i + 1} з ${game.items.length}</div>
-      ${it.text ? `<div class="text">${esc(it.text)}</div>` : ''}
+      ${game.frac ? `<p class="muted" style="margin:0">${game.frac.hint}</p><div class="eqn">${game.frac.view(it)}</div>
+        <div class="fb" id="fb"></div>
+        <div class="formrow" style="justify-content:center"><button class="btn" id="fcheck">Перевірити</button><button class="btn ghost" id="fshow" hidden>Показати розв’язок</button></div>`
+      : `${it.text ? `<div class="text">${esc(it.text)}</div>` : ''}
       <div class="q">${esc(it.q)}</div>
       ${it.choices ? `<div class="choices">${it.choices.map(c => `<button class="choice">${esc(c)}</button>`).join('')}</div>`
         : `<form class="af" id="af"><input class="inp" id="ans" autocomplete="off" placeholder="Відповідь"><button class="btn">OK</button></form>`}
-      <div class="fb" id="fb"></div>
+      <div class="fb" id="fb"></div>`}
       <div><button class="btn" id="next" hidden onclick="next()">${game.i + 1 < game.items.length ? 'Далі →' : 'Завершити'}</button></div></div></div>`;
 }
 function bindGame() {
   if (game.done) return;
+  if (game.frac) return bindFrac();
   const it = game.items[game.i];
   const af = $('#af');
   if (af) { $('#ans').focus(); af.onsubmit = e => { e.preventDefault(); const v = $('#ans').value; if (v.trim()) answer(v); }; }
@@ -362,6 +440,38 @@ function answer(value, btn) {
   fb.textContent = ok ? 'Правильно!' : `Ні. Правильна відповідь: ${firstAnswer(it.a)}`; fb.className = 'fb ' + (ok ? 'ok' : 'no');
   if (btn) { btn.classList.add(ok ? 'ok' : 'no'); document.querySelectorAll('.choice').forEach(b => b.disabled = true); }
   else { $('#ans').className = 'inp ' + (ok ? 'ok' : 'no'); $('#ans').disabled = true; }
+  $('#next').hidden = false; $('#next').focus();
+}
+function bindFrac() {
+  const inputs = [...document.querySelectorAll('.eqn input')];
+  inputs[0].focus();
+  inputs.forEach((el, k) => el.addEventListener('keydown', e => { // Enter — до наступного поля, на останньому — перевірка
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (k < inputs.length - 1) inputs[k + 1].focus(); else fracCheck();
+  }));
+  $('#fcheck').onclick = fracCheck;
+  $('#fshow').onclick = () => fracFinish(false, 'Розв’язок: ' + game.frac.solution(game.items[game.i]));
+}
+function setDot(ok) { const d = document.querySelectorAll('.dots i')[game.i]; if (d) d.className = ok ? 'ok' : 'no'; }
+function fracCheck() {
+  const inputs = [...document.querySelectorAll('.eqn input')], fb = $('#fb');
+  const v = inputs.map(el => parseInt(el.value.replace(/[^\d-]/g, ''), 10));
+  inputs.forEach(el => el.classList.remove('no'));
+  if (v.some(isNaN)) { fb.textContent = 'Заповни всі поля.'; fb.className = 'fb warn'; return; }
+  const r = game.frac.check(game.items[game.i], v);
+  if (r.ok) return fracFinish(true, 'Правильно!');
+  fb.textContent = r.msg; fb.className = 'fb ' + (r.soft ? 'warn' : 'no');
+  if (r.soft) return; // «можна скоротити ще» — не помилка, просто підказка
+  (r.bad || []).forEach(k => inputs[k] && inputs[k].classList.add('no'));
+  if (game.results[game.i] === undefined) { game.results[game.i] = false; setDot(false); } // бал — лише з першої спроби
+  $('#fshow').hidden = false;
+}
+function fracFinish(ok, html) {
+  if (game.results[game.i] === undefined) { game.results[game.i] = ok; setDot(ok); }
+  const fb = $('#fb'); fb.innerHTML = html; fb.className = 'fb ' + (ok ? 'ok' : 'no');
+  document.querySelectorAll('.eqn input').forEach(el => { el.disabled = true; el.classList.toggle('ok', ok); });
+  $('#fcheck').hidden = true; $('#fshow').hidden = true;
   $('#next').hidden = false; $('#next').focus();
 }
 async function next() {
