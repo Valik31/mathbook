@@ -115,6 +115,76 @@ label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
 .fb.warn{color:#B86E00}
 @media (prefers-color-scheme: dark){.fb.warn{color:var(--mark)}}
 @media (max-width:480px){.eqn{font-size:1.3rem}.fr input{width:2.3em;font-size:1.1rem}}
+/* інтерактивні уроки */
+.cover{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px;align-items:center;background:var(--card);border:1.5px solid var(--ink);border-radius:20px;padding:24px;box-shadow:6px 6px 0 var(--blue)}
+@media (max-width:600px){.cover{grid-template-columns:minmax(0,1fr)}}
+.cover-art{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;font:700 2rem "Unbounded",sans-serif;color:var(--blue);background:var(--blue-soft);border-radius:16px;padding:28px 12px}
+.cover-art span{color:var(--muted)}
+.cover-text{display:grid;gap:10px;justify-items:start}
+.cover-text h1{font-size:1.8rem}
+.cover-text p{margin:0}
+.eyebrow{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.hexes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;justify-items:center}
+.hex{width:100%;max-width:190px;aspect-ratio:1/1.08;border:0;cursor:pointer;display:grid;place-content:center;justify-items:center;gap:4px;padding:0 18px;text-align:center;
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:var(--blue);color:#fff;transition:transform .15s}
+.hex:nth-child(2){background:#2E8BC0} .hex:nth-child(3){background:#6C4BC7} .hex:nth-child(4){background:var(--green)}
+.hex:hover{transform:scale(1.04)}
+.hex .hg{font:700 1.3rem "Unbounded",sans-serif;opacity:.9}
+.hex b{font-size:1.05rem} .hex small{font-size:.78rem;opacity:.9}
+.slide-meta{display:flex;justify-content:space-between;align-items:center}
+.pill-sec{font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--blue-soft);color:var(--blue)}
+.slide{background:var(--card);border:1.5px solid var(--ink);border-radius:18px;padding:22px;display:grid;gap:14px;box-shadow:5px 5px 0 var(--ink);min-height:300px;align-content:start}
+.slide-nav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.theory{display:grid;gap:10px;line-height:1.6}
+.theory p{margin:0}
+.theory .fr,.task .fr,.steps .fr,.tq .fr,.answer .fr,.opt .fr,.tf .fr,.m .fr,.area-cap .fr,.recap .fr{font-size:.95em;font-weight:700;margin:0 2px}
+.theory .fr>span,.task .fr>span,.steps .fr>span,.tq .fr>span,.answer .fr>span,.opt .fr>span,.tf .fr>span,.m .fr>span,.area-cap .fr>span,.recap .fr>span{padding:0 4px;line-height:1.15}
+.theory .fr>:first-child,.task .fr>:first-child,.steps .fr>:first-child,.tq .fr>:first-child,.answer .fr>:first-child,.opt .fr>:first-child,.tf .fr>:first-child,.m .fr>:first-child,.area-cap .fr>:first-child,.recap .fr>:first-child{border-bottom-width:2px;padding-bottom:1px}
+.mixed{display:inline-flex;align-items:center;gap:1px;font-weight:700}
+.rule{font-size:1.6rem;font-weight:700;text-align:center;background:var(--blue-soft);border-radius:12px;padding:14px}
+.ex{background:var(--paper);border-left:4px solid var(--blue);padding:8px 12px;border-radius:0 8px 8px 0}
+.cx{position:relative;text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:2px}
+.cx::after{content:attr(data-n);position:absolute;top:-.8em;right:-.5em;font-size:.65em;color:var(--red);font-weight:700;text-decoration:none}
+.fr>:last-child .cx::after{top:auto;bottom:-.85em}
+.ex,.steps li{font-size:1.15rem}
+.ex .fr>span,.steps .fr>span{padding:7px 6px}
+.key{padding:0 5px;border-radius:4px;font-weight:600}
+.ka,.area i.a{background:color-mix(in srgb,var(--blue) 35%,var(--card))}
+.kc,.area i.c{background:color-mix(in srgb,var(--mark) 70%,var(--card))}
+.kac,.area i.ac{background:var(--green);color:#fff}
+.area{display:grid;gap:3px;width:min(100%,320px);aspect-ratio:4/3;margin:0 auto;border:3px solid var(--ink);border-radius:6px;padding:3px;background:var(--ink)}
+.area i{background:var(--card);border-radius:2px}
+.area-wrap{display:grid;gap:12px;justify-items:center;background:var(--paper);border-radius:12px;padding:14px}
+.area-ctl{display:flex;align-items:center;gap:14px;font-size:1.3rem;font-weight:700}
+.fr-ctl{display:grid;justify-items:center;gap:2px;padding:4px 8px;border-radius:10px}
+.fr-ctl hr{width:100%;border:0;border-top:3px solid var(--ink);margin:2px 0}
+.ka-t{background:color-mix(in srgb,var(--blue) 18%,transparent)} .kc-t{background:color-mix(in srgb,var(--mark) 35%,transparent)}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper b{min-width:1.2em;text-align:center}
+.stepper button{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);cursor:pointer;font-weight:700}
+.area-cap{margin:0;text-align:center;font-weight:600}
+.task{font-size:1.1rem;font-weight:600;margin:0}
+.steps{display:grid;gap:10px;margin:0;padding-left:1.4em}
+.steps li{background:var(--paper);border-radius:8px;padding:8px 12px;animation:rise .3s}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}}
+.tq{font-family:"Golos Text",sans-serif;font-size:1.2rem;line-height:1.5}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:var(--paper);border-radius:12px;padding:12px 14px;cursor:pointer;font-weight:600}
+.opt:hover{border-color:var(--blue)} .opt.ok{border-color:var(--green);background:var(--green-soft)} .opt.no{border-color:var(--red);background:var(--red-soft)}
+.tfs,.matches{display:grid;gap:8px}
+.tf,.m{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper)}
+.tf.bad{border-color:var(--red);background:var(--red-soft)}
+.tfb{display:flex;gap:6px}
+.tfb button{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600}
+.tfb button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.m select{max-width:160px} .m select.no{border-color:var(--red);background:var(--red-soft)}
+.answer{background:var(--green-soft);border-radius:12px;padding:12px 14px;line-height:1.8}
+.answer p{margin:6px 0 0}
+.result-box{display:grid;justify-items:center;gap:8px;text-align:center;background:var(--blue-soft);border-radius:14px;padding:18px}
+.result-box p{margin:0}
+.recap{display:grid;gap:10px;padding-left:1.2em;margin:0;line-height:1.7}
+.lesson-item .lg{font:700 1rem "Unbounded",sans-serif;color:var(--blue);background:var(--blue-soft);border-radius:10px;padding:6px 10px}
+@media (prefers-reduced-motion:reduce){.steps li{animation:none}.hex{transition:none}}
 .rank{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .rank b.r{color:var(--muted);text-align:right}
 .rank.me{border-color:var(--blue);background:var(--blue-soft)}
@@ -145,6 +215,8 @@ label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
 </div>
 <div class="loader" id="loader" hidden><div class="box"><div class="syms"><span>+</span><span>−</span><span>×</span><span>=</span></div><p id="loaderText">Завантаження…</p></div></div>
 
+<!-- Інтерактивні уроки: кожен файл у папці lessons/ додає один урок -->
+<script src="lessons/mnozhennia-drobiv.js"></script>
 <script>
 /* ===== НАЛАШТУВАННЯ: вставте сюди адресу веб-застосунку Apps Script ===== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbyKFXoSCXuaUsbP52228ZJOfhXFyNlESEfvRlk-iBJ2XPub30fcgetcIDnKBmFQYlJc/exec';
@@ -376,8 +448,10 @@ function trainersView() {
     <h2>Генератори прикладів</h2><div class="list">${gens}</div>`;
 }
 function lessonsView() {
-  return `<h2>Уроки</h2><div class="list">${data.lessons.map((l, i) => `<div class="item"><div class="grow"><b>${esc(l.name)}</b><small>${l.steps.length} кроків</small></div>
-    ${me.done.includes('Урок: ' + l.name) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startLesson(${i})">Відкрити</button></div>`).join('') || '<p class="muted">Уроків поки немає.</p>'}</div>`;
+  const slides = SLIDE_LESSONS.map(l => `<div class="item lesson-item"><span class="lg">${F(1, 2)}</span><div class="grow"><b>${esc(l.title)}</b><small>${esc(l.grade || '')} · теорія, приклади, ${l.sections.reduce((n, s) => n + s.slides.filter(isTask).length, 0)} завдань</small></div>
+    ${me.done.includes('Урок: ' + l.title) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startSlides('${l.id}')">Відкрити</button></div>`).join('');
+  return `${slides ? `<h2>Інтерактивні уроки</h2><div class="list">${slides}</div>` : ''}<h2>Уроки від учителя</h2><div class="list">${data.lessons.map((l, i) => `<div class="item"><div class="grow"><b>${esc(l.name)}</b><small>${l.steps.length} кроків</small></div>
+    ${me.done.includes('Урок: ' + l.name) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startLesson(${i})">Відкрити</button></div>`).join('') || '<p class="muted">Учитель ще не додав уроків у таблицю.</p>'}</div>`;
 }
 function ratingView() {
   return `${me.guest ? guestNote() : ''}<div class="top" style="margin:0"><h2>Рейтинг класу</h2><div class="right"><button class="btn ghost sm" onclick="refresh()">Оновити</button></div></div>
@@ -405,6 +479,7 @@ function startLesson(i) {
   render();
 }
 function gameView() {
+  if (game.slides) return slidesView();
   const it = game.items[game.i];
   return `<div class="stack"><div class="top" style="margin:0"><button class="btn ghost sm" onclick="quit()">← Назад</button><b>${esc(game.title)}</b></div>
     <div class="dots">${game.items.map((_, k) => `<i class="${game.results[k] === true ? 'ok' : game.results[k] === false ? 'no' : ''}"></i>`).join('')}</div>
@@ -421,6 +496,7 @@ function gameView() {
 }
 function bindGame() {
   if (game.done) return;
+  if (game.slides) return bindSlides();
   if (game.frac) return bindFrac();
   const it = game.items[game.i];
   const af = $('#af');
@@ -476,7 +552,9 @@ function fracFinish(ok, html) {
 }
 async function next() {
   if (game.i + 1 < game.items.length) { game.i++; render(); return; }
-  const correct = game.results.filter(Boolean).length, total = game.items.length;
+  await submitResult(game.results.filter(Boolean).length, game.items.length);
+}
+async function submitResult(correct, total) {
   const before = levelOf(me.xp).n;
   if (me.guest) {
     const gained = correct * data.xpPerAnswer;
@@ -503,7 +581,176 @@ function resultView() {
     ${me.guest ? '<p class="muted" style="margin:0">Ти в режимі гостя, тому бали не записані в рейтинг класу.</p>' : ''}
     <div><button class="btn" onclick="quit()">Готово</button></div></div>`;
 }
-function quit() { const back = game && game.lesson ? 'lessons' : 'trainers'; game = null; tab = back; render(); }
+function quit() { const back = game && (game.lesson || game.slides) ? 'lessons' : 'trainers'; game = null; tab = back; render(); }
+
+/* ================= ІНТЕРАКТИВНІ УРОКИ (слайди) ================= */
+// Зміст уроків лежить у папці lessons/, кожен файл додає урок у window.MB_LESSONS
+const SLIDE_LESSONS = window.MB_LESSONS || [];
+const fx = s => String(s)
+  .replace(/\{(\d+) (\d+)\/(\d+)\}/g, (_, w, n, d) => `<span class="mixed">${w}${F(n, d)}</span>`)
+  .replace(/\{(\d+)\/(\d+)\}/g, (_, n, d) => F(n, d));
+const fxText = s => String(s).replace(/\{(\d+) (\d+)\/(\d+)\}/g, '$1 $2/$3').replace(/\{(\d+)\/(\d+)\}/g, '$1/$2');
+const TASK_TYPES = ['choice', 'frac', 'area', 'tf', 'match'];
+const isTask = sl => TASK_TYPES.includes(sl.type);
+
+function startSlides(id) {
+  const L = SLIDE_LESSONS.find(l => l.id === id);
+  game = { slides: true, L, title: 'Урок: ' + L.title, view: 'cover', sec: 0, k: 0, tasks: {}, revealed: {}, seen: {}, area: { a: 1, b: 2, c: 1, d: 3 }, results: [] };
+  render();
+}
+const slideKey = () => game.sec + '-' + game.k;
+function slideScore() {
+  let total = 0, correct = 0;
+  game.L.sections.forEach((s, si) => s.slides.forEach((sl, k) => { if (isTask(sl)) { total++; if (game.tasks[si + '-' + k]?.first) correct++; } }));
+  return { total, correct };
+}
+function goSlide(sec, k) { game.view = 'slide'; game.sec = sec; game.k = k; render(); window.scrollTo(0, 0); }
+function slideStep(dir) {
+  const secs = game.L.sections, n = secs[game.sec].slides.length;
+  if (dir > 0 && game.k + 1 < n) return goSlide(game.sec, game.k + 1);
+  if (dir > 0 && game.sec + 1 < secs.length) return goSlide(game.sec + 1, 0);
+  if (dir < 0 && game.k > 0) return goSlide(game.sec, game.k - 1);
+  if (dir < 0 && game.sec > 0) return goSlide(game.sec - 1, secs[game.sec - 1].slides.length - 1);
+}
+
+function slidesView() {
+  const L = game.L, head = (back, label) => `<div class="top" style="margin:0"><button class="btn ghost sm" onclick="${back}">←&nbsp;${label}</button><b>${esc(L.title)}</b></div>`;
+  if (game.view === 'cover') {
+    return `<div class="stack">${head('quit()', 'Уроки')}
+      <div class="cover"><div class="cover-art">${F(2, 3)}<span>·</span>${F(3, 4)}<span>=</span>${F(1, 2)}</div>
+        <div class="cover-text"><div class="eyebrow">${esc(L.grade || '')} · інтерактивний урок</div><h1>${esc(L.title)}</h1><p>${esc(L.intro || '')}</p>
+        <button class="btn" onclick="game.view='menu';render()">Почати урок</button></div></div></div>`;
+  }
+  if (game.view === 'menu') {
+    const sc = slideScore();
+    return `<div class="stack">${head("game.view='cover';render()", 'Обкладинка')}
+      <h2>Зміст уроку</h2>
+      <div class="hexes">${L.sections.map((s, si) => {
+        const tasks = s.slides.filter(isTask).length, seen = s.slides.filter((_, k) => game.seen[si + '-' + k]).length;
+        const solved = s.slides.filter((sl, k) => isTask(sl) && game.tasks[si + '-' + k]?.done).length;
+        const status = tasks ? `${solved} з ${tasks} розв’язано` : seen === s.slides.length ? 'Переглянуто' : `${s.slides.length} ${s.slides.length === 1 ? 'слайд' : s.slides.length < 5 ? 'слайди' : 'слайдів'}`;
+        return `<button class="hex ${seen === s.slides.length ? 'done' : ''}" onclick="goSlide(${si},0)"><span class="hg">${esc(s.glyph || si + 1)}</span><b>${esc(s.name)}</b><small>${status}</small></button>`;
+      }).join('')}</div>
+      <p class="muted" style="text-align:center">Завдання: ${sc.correct} з ${sc.total} правильно з першої спроби</p></div>`;
+  }
+  const sec = L.sections[game.sec], sl = sec.slides[game.k], key = slideKey();
+  game.seen[key] = true;
+  const last = game.sec === L.sections.length - 1 && game.k === sec.slides.length - 1;
+  return `<div class="stack">${head("game.view='menu';render()", 'Зміст')}
+    <div class="slide-meta"><span class="pill-sec">${esc(sec.name)}</span><span class="muted">${game.k + 1} / ${sec.slides.length}</span></div>
+    <div class="slide">${slideBody(sl, key)}</div>
+    <div class="slide-nav"><button class="btn ghost" onclick="slideStep(-1)" ${game.sec === 0 && game.k === 0 ? 'disabled' : ''}>← Назад</button>
+      ${last ? '' : `<button class="btn" onclick="slideStep(1)">${game.k + 1 < sec.slides.length ? 'Далі →' : `До розділу «${esc(L.sections[game.sec + 1].name)}» →`}</button>`}</div></div>`;
+}
+
+function areaGrid(a, b, c, d) {
+  let cells = '';
+  for (let r = 0; r < d; r++) for (let col = 0; col < b; col++) {
+    const A = col < a, C = r < c;
+    cells += `<i class="${A && C ? 'ac' : A ? 'a' : C ? 'c' : ''}"></i>`;
+  }
+  return `<div class="area" style="grid-template-columns:repeat(${b},1fr);grid-template-rows:repeat(${d},1fr)" role="img" aria-label="Модель площі ${a}/${b} на ${c}/${d}">${cells}</div>`;
+}
+function areaWidget() {
+  const { a, b, c, d } = game.area;
+  const ctl = (k, label) => `<span class="stepper"><button onclick="areaSet('${k}',-1)" aria-label="${label} менше">−</button><b>${game.area[k]}</b><button onclick="areaSet('${k}',1)" aria-label="${label} більше">+</button></span>`;
+  return `<div class="area-wrap"><div class="area-ctl">
+      <div class="fr-ctl ka-t">${ctl('a', 'чисельник першого')}<hr>${ctl('b', 'знаменник першого')}</div><span class="op">·</span>
+      <div class="fr-ctl kc-t">${ctl('c', 'чисельник другого')}<hr>${ctl('d', 'знаменник другого')}</div></div>
+    ${areaGrid(a, b, c, d)}
+    <p class="area-cap">${F(a, b)} · ${F(c, d)} = ${F(a * c, b * d)} <span class="muted">— зелених клітинок ${a * c} з ${b * d}</span></p></div>`;
+}
+function areaSet(k, dir) {
+  const A = game.area;
+  A[k] = Math.max(1, Math.min(6, A[k] + dir));
+  if (A.a > A.b) A.a = A.b; if (A.c > A.d) A.c = A.d; // лише правильні дроби
+  $('#areaW').innerHTML = areaWidget();
+}
+
+function answerHtml(sl) {
+  if (sl.type === 'choice') return esc(sl.options[sl.answer]);
+  if (sl.type === 'frac' || sl.type === 'area') return F(sl.answer[0], sl.answer[1]);
+  if (sl.type === 'tf') return sl.statements.map(([t, v]) => `${fx(t)} — <b>${v ? 'правда' : 'неправда'}</b>`).join('<br>');
+  if (sl.type === 'match') return sl.pairs.map(([l, r]) => `${fx(l)} = ${fx(r)}`).join('<br>');
+}
+function slideBody(sl, key) {
+  if (sl.type === 'theory') return `<h2>${esc(sl.title)}</h2><div class="theory">${fx(sl.html)}</div>${sl.widget === 'area' ? `<div id="areaW">${areaWidget()}</div>` : ''}`;
+  if (sl.type === 'example') {
+    const r = game.revealed[key] || 0;
+    return `<h2>${esc(sl.title)}</h2><p class="task">${fx(sl.task)}</p>
+      <ol class="steps">${sl.steps.slice(0, r).map(st => `<li>${fx(st)}</li>`).join('')}</ol>
+      ${r < sl.steps.length ? `<button class="btn ghost" onclick="game.revealed['${key}']=${r + 1};render()">${r ? 'Наступний крок' : 'Показати розв’язок'} (${r + 1}/${sl.steps.length})</button>` : '<p class="fb ok">Розв’язок повний. Спробуй такий самий приклад у розділі «Завдання».</p>'}`;
+  }
+  if (sl.type === 'summary') {
+    const sc = slideScore();
+    return `<h2>${esc(sl.title)}</h2><div class="theory">${fx(sl.html)}</div>
+      <div class="result-box"><div class="big">${sc.correct}/${sc.total}</div><p>завдань розв’язано правильно з першої спроби</p>
+      <button class="btn" onclick="finishSlides()">Завершити урок і отримати ${sc.correct * data.xpPerAnswer} XP</button></div>`;
+  }
+  // завдання
+  const st = game.tasks[key] || {}, n = game.L.sections[game.sec].slides.filter(isTask).indexOf(sl) + 1;
+  const head = `<div class="eyebrow">Завдання ${n}</div><h2 class="tq">${fx(sl.q)}</h2>`;
+  if (st.done) {
+    return `${head}${sl.type === 'area' ? areaGrid(...sl.model) : ''}<div class="fb ${st.first ? 'ok' : 'no'}">${st.first ? 'Правильно з першої спроби!' : 'Розв’язано не з першої спроби.'}</div>
+      <div class="answer"><b>Відповідь:</b><br>${answerHtml(sl)}${sl.explain ? `<p class="muted">${fx(sl.explain)}</p>` : ''}</div>`;
+  }
+  let body = '';
+  if (sl.type === 'choice') body = `<div class="opts">${sl.options.map((o, i) => `<button class="opt" onclick="checkTask(${i})">${fx(o)}</button>`).join('')}</div>`;
+  if (sl.type === 'frac' || sl.type === 'area') body = `${sl.type === 'area' ? areaGrid(...sl.model) : ''}<div class="eqn"><span class="fr">${inp('чисельник')}${inp('знаменник')}</span></div>`;
+  if (sl.type === 'tf') body = `<div class="tfs">${sl.statements.map(([t], i) => `<div class="tf" data-i="${i}"><span>${fx(t)}</span><span class="tfb"><button onclick="tfPick(this,1)">Правда</button><button onclick="tfPick(this,0)">Неправда</button></span></div>`).join('')}</div>`;
+  if (sl.type === 'match') {
+    const rights = shuffle(sl.pairs.map(p => p[1]));
+    body = `<div class="matches">${sl.pairs.map(([l], i) => `<label class="m"><span>${fx(l)} =</span><select class="inp" data-i="${i}"><option value="">— обери —</option>${rights.map(r => `<option value="${esc(r)}">${esc(fxText(r))}</option>`).join('')}</select></label>`).join('')}</div>`;
+  }
+  return `${head}${body}<div class="fb" id="fb"></div>
+    <div class="formrow" style="justify-content:center">${sl.type === 'choice' ? '' : '<button class="btn" onclick="checkTask()">Перевірити</button>'}
+    <button class="btn ghost" id="tshow" ${st.first === false ? '' : 'hidden'} onclick="revealTask()">Показати відповідь</button></div>`;
+}
+function tfPick(btn, v) { const row = btn.closest('.tf'); row.dataset.v = v; row.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn)); row.classList.remove('bad'); }
+
+function checkTask(choice) {
+  const sl = game.L.sections[game.sec].slides[game.k], key = slideKey(), st = game.tasks[key] || (game.tasks[key] = {}), fb = $('#fb');
+  let ok = false, soft = null;
+  if (sl.type === 'choice') {
+    ok = choice === sl.answer;
+    document.querySelectorAll('.opt')[choice].classList.add(ok ? 'ok' : 'no');
+  } else if (sl.type === 'frac' || sl.type === 'area') {
+    const ins = [...document.querySelectorAll('.eqn input')], [n, d] = ins.map(el => parseInt(el.value, 10));
+    if (isNaN(n) || isNaN(d) || !d) { fb.textContent = 'Заповни чисельник і знаменник.'; fb.className = 'fb warn'; return; }
+    const [an, ad] = sl.answer, same = n * ad === d * an;
+    ok = same && (!sl.reduce || gcdI(n, d) === 1);
+    if (same && !ok) soft = 'Правильно, але дріб можна скоротити. Скороти до кінця.';
+    ins.forEach(el => el.classList.toggle('no', !same));
+  } else if (sl.type === 'tf') {
+    const rows = [...document.querySelectorAll('.tf')];
+    if (rows.some(r => r.dataset.v === undefined)) { fb.textContent = 'Дай відповідь на кожне твердження.'; fb.className = 'fb warn'; return; }
+    rows.forEach((r, i) => r.classList.toggle('bad', (r.dataset.v === '1') !== sl.statements[i][1]));
+    ok = !rows.some(r => r.classList.contains('bad'));
+  } else if (sl.type === 'match') {
+    const sels = [...document.querySelectorAll('.matches select')];
+    if (sels.some(x => !x.value)) { fb.textContent = 'Обери відповідь для кожного рядка.'; fb.className = 'fb warn'; return; }
+    sels.forEach((x, i) => x.classList.toggle('no', x.value !== sl.pairs[i][1]));
+    ok = sels.every((x, i) => x.value === sl.pairs[i][1]);
+  }
+  if (soft) { fb.textContent = soft; fb.className = 'fb warn'; return; }
+  if (st.first === undefined) st.first = ok; // бал — лише за першу спробу
+  if (ok) { st.done = true; render(); return; }
+  fb.innerHTML = 'Є помилка. ' + (sl.hint ? fx(sl.hint) : sl.type === 'choice' ? 'Спробуй іншу відповідь.' : 'Перевір позначене червоним і спробуй ще раз.');
+  fb.className = 'fb no';
+  $('#tshow').hidden = false;
+}
+function revealTask() { const st = game.tasks[slideKey()]; st.done = true; render(); }
+
+async function finishSlides() {
+  const sc = slideScore();
+  await submitResult(sc.correct, sc.total);
+}
+function bindSlides() {
+  const ins = [...document.querySelectorAll('.slide .eqn input')];
+  if (!ins.length) return;
+  ins[0].focus({ preventScroll: true });
+  ins.forEach((el, k) => el.addEventListener('keydown', e => { if (e.key !== 'Enter') return; e.preventDefault(); k < ins.length - 1 ? ins[k + 1].focus() : checkTask(); }));
+}
 
 /* ================= КАБІНЕТ ВЧИТЕЛЯ ================= */
 function teacherLoginView() {
