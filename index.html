@@ -33,6 +33,10 @@ h1{font-size:1.5rem} h2{font-size:1.15rem}
 .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
 .btn.sm{padding:6px 12px;font-size:.88rem}
 .btn:disabled{opacity:.4;cursor:default}
+a.btn{text-decoration:none;display:inline-block}
+.who{display:flex;gap:8px;align-items:center}
+.lab-link{border-color:var(--blue);color:var(--blue)!important} .lab-link:hover{color:#fff!important}
+.lab-item{border-color:var(--blue);background:linear-gradient(90deg,var(--blue-soft),var(--card))}
 .inp{width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px}
 .inp:focus{outline:none;border-color:var(--blue)}
 .muted{color:var(--muted)}
@@ -208,7 +212,7 @@ label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
 <div class="wrap">
   <header class="top">
     <span class="brand">MathBook</span><span class="cls" id="cls"></span>
-    <div class="right" id="who"></div>
+    <div class="right"><a class="btn ghost sm lab-link" href="ar-lab/index.html" title="3D-сцени для VR-окулярів і доповненої реальності">AR/VR-лабораторія</a><div id="who" class="who"></div></div>
   </header>
   <div id="banner"></div>
   <main id="main"></main>
@@ -435,6 +439,7 @@ function homeView() {
     <div class="list">
       <div class="item"><div class="grow"><b>Тренажери</b><small>За кожну правильну відповідь — ${data.xpPerAnswer} XP</small></div><button class="btn sm" onclick="setTab('trainers')">Тренуватися</button></div>
       <div class="item"><div class="grow"><b>Уроки</b><small>Пояснення з питаннями крок за кроком</small></div><button class="btn sm" onclick="setTab('lessons')">Вчитися</button></div>
+      <div class="item lab-item"><div class="grow"><b>AR/VR-лабораторія: циліндр</b><small>3D-сцени: елементи, розгортка, перерізи, вписані тіла — у браузері, VR-окулярах або через камеру телефона</small></div><a class="btn sm" href="ar-lab/index.html">Відкрити</a></div>
     </div>`;
 }
 function trainersView() {

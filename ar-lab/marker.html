@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>AR з маркером · MathBook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Golos+Text:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="lab.css">
+<!-- AR з маркером Hiro: A-Frame + AR.js (працює і на Android, і на iPhone, потрібна лише камера) -->
+<script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.js"></script>
+<script src="lab.js"></script>
+<script src="scenes/elementy.js"></script>
+<script src="scenes/obertannia.js"></script>
+<script src="scenes/rozghortka.js"></script>
+<script src="scenes/pererizy.js"></script>
+<script src="scenes/kombinatsii.js"></script>
+</head>
+<body>
+<script>Lab.init(new URLSearchParams(location.search).get('s'), { marker: true });</script>
+</body>
+</html>
