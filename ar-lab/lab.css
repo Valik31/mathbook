@@ -1,0 +1,94 @@
+/* AR/VR-лабораторія MathBook — ті самі кольори, що й на основному сайті */
+:root{
+  --paper:#F5F7FC; --grid:rgba(52,84,200,.08); --card:#fff; --ink:#1A2140; --muted:#5A6384;
+  --line:#D8DEEE; --blue:#2646D4; --blue-soft:#E4E9FC; --green:#1B8A57; --green-soft:#DDF3E8;
+  --red:#D33F37; --mark:#FFE03D; --mark-ink:#3B3000;
+}
+@media (prefers-color-scheme: dark){:root{
+  --paper:#0F131D; --grid:rgba(130,150,255,.07); --card:#161B29; --ink:#E5E8F4; --muted:#98A1C0;
+  --line:#272F47; --blue:#8098FF; --blue-soft:#1E2747; --green:#4CC48A; --green-soft:#16302A;
+  --red:#FF6E64; --mark:#F0CC2C; --mark-ink:#2A2200; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 "Golos Text",system-ui,sans-serif}
+h1,h2,h3{font-family:"Unbounded","Golos Text",sans-serif;margin:0;line-height:1.2}
+button,input,select{font:inherit;color:inherit}
+
+/* ---------- сторінка сцени ---------- */
+#ui{position:fixed;inset:0;z-index:5;pointer-events:none;display:flex;flex-direction:column;padding:12px;gap:10px}
+#ui>*{pointer-events:auto}
+.lab-top{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;max-width:380px}
+.lab-back{color:var(--blue);font-weight:600;text-decoration:none;white-space:nowrap}
+.lab-title{font-family:"Unbounded",sans-serif;font-size:.85rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lab-panel{width:380px;max-width:100%;max-height:calc(100% - 70px);overflow:auto;background:color-mix(in srgb,var(--card) 94%,transparent);
+  border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.lab-panel>*{flex-shrink:0}
+.panel-hidden .lab-panel{display:none}
+.lab-goal{margin:0;color:var(--muted);font-size:.9rem}
+.lab-hint{margin:0;background:var(--mark);color:var(--mark-ink);border-radius:10px;padding:8px 10px;font-size:.88rem}
+.lab-hint select{display:block;width:100%;margin-top:6px;border:1px solid rgba(0,0,0,.2);border-radius:8px;padding:5px 8px;background:#fff;color:#1A2140}
+.lab-modes{display:flex;flex-wrap:wrap;gap:6px}
+.lab-modes button{border:1.5px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 12px;cursor:pointer;font-weight:600;font-size:.85rem}
+.lab-modes button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.lab-range{display:grid;gap:2px;font-size:.88rem;font-weight:600}
+.lab-range b{color:var(--blue)}
+.lab-range[hidden]{display:none}
+.lab-range input{width:100%;accent-color:var(--blue)}
+.lab-checks{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.88rem}
+.lab-check{display:flex;gap:6px;align-items:center;cursor:pointer}
+.lab-check input{accent-color:var(--blue);width:16px;height:16px}
+.lab-actions{display:flex;flex-wrap:wrap;gap:8px}
+.lab-btn{border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
+.lab-btn:hover{background:var(--blue);border-color:var(--blue)}
+.lab-btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.lab-btn.sm{padding:4px 10px;font-size:.82rem}
+.lab-info{width:100%;border-collapse:collapse;font-size:.9rem;background:var(--blue-soft);border-radius:10px;overflow:hidden}
+.lab-info td{padding:5px 10px}
+.lab-info td:last-child{text-align:right;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lab-info tr+tr td{border-top:1px solid color-mix(in srgb,var(--blue) 15%,transparent)}
+.lab-note{margin:0;font-size:.88rem;border-left:4px solid var(--green);background:var(--green-soft);padding:8px 10px;border-radius:0 8px 8px 0}
+.lab-note:empty{display:none}
+.lab-help{font-size:.85rem;color:var(--muted)}
+.lab-help summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.lab-help p{margin:6px 0}
+a-scene{position:fixed!important;inset:0}
+/* Телефон: панель знизу, модель зверху */
+@media (max-width:640px){
+  #ui{padding:8px;justify-content:space-between}
+  .lab-top{max-width:none}
+  .lab-panel{width:100%;max-height:40vh}
+  .lab-help{display:none}
+}
+/* У VR панелі не видно (там дошка в сцені), в AR — панель поверх камери */
+.in-vr #ui{display:none}
+.in-ar .lab-panel{max-height:38vh}
+.in-ar .lab-back{display:none}
+/* AR.js: відео камери під сценою */
+body.marker{overflow:hidden}
+body.marker video{z-index:0!important}
+
+/* ---------- головна сторінка лабораторії ---------- */
+.home{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;min-height:100vh}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px;display:grid;gap:20px}
+.bar-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-family:"Unbounded",sans-serif;font-weight:700;font-size:1.2rem;color:var(--blue);text-decoration:none}
+.bar-top .right{margin-left:auto}
+.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:center;background:var(--card);border:1.5px solid var(--ink);border-radius:20px;padding:24px;box-shadow:6px 6px 0 var(--blue)}
+.hero p{margin:8px 0 0;color:var(--muted)}
+.hero svg{width:100%;height:auto;max-height:220px}
+.eyebrow{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.mode{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:.9rem}
+.mode>b{display:block;font-size:.95rem}
+.mode span{color:var(--muted)}
+.scenes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.scene{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:10px;align-content:start}
+.scene .n{font:700 .8rem "Unbounded",sans-serif;color:var(--blue);background:var(--blue-soft);border-radius:8px;padding:4px 8px;justify-self:start}
+.scene p{margin:0;color:var(--muted);font-size:.9rem}
+.scene ul{margin:0;padding-left:18px;font-size:.88rem}
+.scene .go{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:10px}
+.card p,.card li{font-size:.92rem}
+.card ol,.card ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.marker-box{display:grid;grid-template-columns:160px minmax(0,1fr);gap:16px;align-items:center}
+.marker-box img{width:160px;height:160px;border-radius:8px;background:#fff;padding:8px;border:1px solid var(--line)}
+@media (max-width:640px){.hero{grid-template-columns:1fr}.hero svg{max-height:160px}.marker-box{grid-template-columns:1fr}.marker-box img{justify-self:center}}

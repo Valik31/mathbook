@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AR/VR-лабораторія · MathBook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Golos+Text:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="lab.css">
+</head>
+<body class="home">
+<div class="wrap">
+  <header class="bar-top">
+    <a class="brand" href="../">MathBook</a><span class="eyebrow">AR/VR-лабораторія</span>
+    <div class="right"><a class="lab-btn ghost sm" href="../">← На платформу</a></div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <span class="eyebrow">Стереометрія · 11 клас</span>
+      <h1>Лабораторія «Циліндр»</h1>
+      <p>Інтерактивні 3D-сцени, створені на A-Frame. Їх можна обертати на комп’ютері чи телефоні, роздивлятися в окулярах віртуальної реальності (VR) або «поставити» модель на парту через камеру телефона (AR).</p>
+    </div>
+    <svg viewBox="0 0 220 200" role="img" aria-label="Циліндр з віссю, радіусом і твірною">
+      <ellipse cx="110" cy="160" rx="70" ry="20" fill="#6F86F0" fill-opacity=".25" stroke-width="2.5" style="stroke:var(--ink)"/>
+      <rect x="40" y="40" width="140" height="120" fill="#2646D4" fill-opacity=".18"/>
+      <line x1="40" y1="40" x2="40" y2="160" style="stroke:var(--ink)" stroke-width="2.5"/>
+      <line x1="180" y1="40" x2="180" y2="160" stroke="#D33F37" stroke-width="4"/>
+      <ellipse cx="110" cy="40" rx="70" ry="20" fill="#6F86F0" fill-opacity=".35" style="stroke:var(--ink)" stroke-width="2.5"/>
+      <line x1="110" y1="20" x2="110" y2="185" style="stroke:var(--muted)" stroke-width="2" stroke-dasharray="6 5"/>
+      <line x1="110" y1="160" x2="180" y2="160" stroke="#1B8A57" stroke-width="4"/>
+      <text x="140" y="178" font-style="italic" font-family="Georgia,serif" font-size="18" fill="#1B8A57">r</text>
+      <text x="188" y="105" font-style="italic" font-family="Georgia,serif" font-size="18" fill="#D33F37">h</text>
+    </svg>
+  </section>
+
+  <section class="modes">
+    <div class="mode"><b>💻 Комп’ютер / дошка</b><span>Тягніть модель мишкою, коліщатко — масштаб. Зручно для демонстрації на інтерактивній дошці.</span></div>
+    <div class="mode"><b>📱 Телефон, планшет</b><span>Обертання пальцем, щипок — масштаб. Кнопка <b>AR</b> (Android, Chrome) ставить модель на стіл.</span></div>
+    <div class="mode"><b>🥽 VR-окуляри, Cardboard</b><span>Кнопка <b>VR</b> у правому нижньому куті сцени. Керування — кнопками на дошці поруч із моделлю.</span></div>
+    <div class="mode"><b>🎯 AR з маркером</b><span>Працює на будь-якому телефоні з камерою, зокрема iPhone: наведіть камеру на маркер Hiro.</span></div>
+  </section>
+
+  <h2>Сцени</h2>
+  <section class="scenes" id="scenes"></section>
+
+  <section class="card" id="marker">
+    <h2>AR з маркером</h2>
+    <div class="marker-box">
+      <img src="hiro.png" alt="Маркер Hiro для AR">
+      <div>
+        <ol>
+          <li>Надрукуйте маркер (близько 8–10 см) або відкрийте його на іншому екрані.</li>
+          <li>Відкрийте сцену кнопкою <b>«AR з маркером»</b> і дозвольте доступ до камери.</li>
+          <li>Наведіть камеру на маркер — над ним з’явиться модель. Повертайте аркуш, щоб розглянути її з різних боків.</li>
+        </ol>
+        <p><a class="lab-btn ghost sm" href="hiro.png" download>Завантажити маркер</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Для вчителя: як використати на уроці</h2>
+    <ul>
+      <li><b>Актуалізація й мотивація.</b> «Циліндр — тіло обертання»: учні прогнозують, яку фігуру опише прямокутник, потім перевіряють анімацією.</li>
+      <li><b>Вивчення нового.</b> «Елементи циліндра»: вмикайте елементи по одному і вводьте поняття основи, осі, радіуса, твірної, висоти.</li>
+      <li><b>Виведення формул.</b> «Розгортка»: S біч = 2πrh випливає з розміру прямокутника. «Циліндр і інші тіла»: об’єм вписаної призми прямує до πr²h.</li>
+      <li><b>Розв’язування задач.</b> «Перерізи»: побудова осьового перерізу, перерізу, паралельного осі, і обчислення їхніх площ.</li>
+      <li><b>Групова робота.</b> Кожна група отримує телефон з AR-маркером і завдання: виміряти параметри моделі, обчислити площу чи об’єм, перевірити відповідь на панелі.</li>
+      <li><b>Безпека VR.</b> Сеанс в окулярах — до 5–10 хвилин; учні сидять, а простір навколо вільний.</li>
+    </ul>
+  </section>
+</div>
+<script>
+const SCENES = [
+  ['elementy', 'Елементи циліндра', 'Основи, вісь, радіус, твірна, висота. Площі поверхонь і об’єм для будь-яких r і h.', ['поняття циліндра та його елементи', 'рівносторонній циліндр', 'S біч, S повн, V']],
+  ['obertannia', 'Циліндр — тіло обертання', 'Прямокутник обертається навколо сторони й «малює» циліндр.', ['циліндр як тіло обертання', 'що описує кожна сторона прямокутника']],
+  ['rozghortka', 'Розгортка циліндра', 'Бічна поверхня розгортається в прямокутник 2πr × h, основи відкидаються.', ['розгортка циліндра', 'виведення S біч = 2πrh']],
+  ['pererizy', 'Перерізи циліндра', 'Осьовий переріз, паралельний і перпендикулярний осі, похилий — з площами.', ['осьовий переріз', 'перерізи площинами', 'еліпс як переріз']],
+  ['kombinatsii', 'Циліндр і інші тіла', 'Вписані й описані призми, куля та конус у циліндрі; співвідношення об’ємів.', ['вписана й описана призми', 'теорема Архімеда', 'V конуса = 1/3 V циліндра']],
+];
+document.getElementById('scenes').innerHTML = SCENES.map(([id, title, text, topics], i) => `<article class="scene">
+  <span class="n">Сцена ${i + 1}</span><h3>${title}</h3><p>${text}</p>
+  <ul>${topics.map(t => `<li>${t}</li>`).join('')}</ul>
+  <div class="go"><a class="lab-btn sm" href="scene.html?s=${id}">3D · VR · AR</a><a class="lab-btn ghost sm" href="marker.html?s=${id}">AR з маркером</a></div></article>`).join('');
+</script>
+</body>
+</html>
