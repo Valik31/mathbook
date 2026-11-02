@@ -189,6 +189,16 @@ label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
 .recap{display:grid;gap:10px;padding-left:1.2em;margin:0;line-height:1.7}
 .lesson-item .lg{font:700 1rem "Unbounded",sans-serif;color:var(--blue);background:var(--blue-soft);border-radius:10px;padding:6px 10px}
 @media (prefers-reduced-motion:reduce){.steps li{animation:none}.hex{transition:none}}
+.rulecard{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;background:var(--blue-soft);border-radius:12px;padding:10px 14px;font-size:1.3rem}
+.rulecard .fr>span{padding:3px 6px;display:flex;align-items:center;gap:2px}
+.rulecard .rc-n{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blue);margin-right:4px}
+.sh{width:1.15em;height:1.15em;fill:var(--blue);stroke:var(--ink);stroke-width:1.6;vertical-align:middle}
+.sh.o{fill:var(--card)}
+.dot{color:var(--ink);font-weight:700;margin:0 2px}
+.eqn:has(.rulecard){flex-direction:column;gap:14px}
+.eqn-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 10px}
+.fr .pair{display:flex;align-items:center;gap:2px}
+@media (max-width:480px){.rulecard{font-size:1.05rem}.eqn-row .fr input{width:2.1em}}
 .rank{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .rank b.r{color:var(--muted);text-align:right}
 .rank.me{border-color:var(--blue);background:var(--blue-soft)}
@@ -262,6 +272,20 @@ const F = (n, d) => `<span class="fr"><span>${n}</span><span>${d}</span></span>`
 const inp = label => `<input inputmode="numeric" autocomplete="off" placeholder="?" aria-label="${label}">`;
 function irreducible() { let n, d; do { n = ri(1, 9); d = ri(2, 10); } while (n >= d || gcdI(n, d) !== 1); return [n, d]; }
 
+// Картка-правило з фігурами, як на плакаті: ▲/⏢ · ●/■ = (▲·●)/(⏢·■) і ▲ · ●/■ = (▲·●)/■
+const SHAPE = {
+  tri: '<svg class="sh" viewBox="0 0 24 22" aria-hidden="true"><path d="M12 2 22 20H2z"/></svg>',
+  circ: '<svg class="sh" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/></svg>',
+  trap: '<svg class="sh o" viewBox="0 0 28 22" aria-hidden="true"><path d="M7 2h14l5 18H2z"/></svg>',
+  sq: '<svg class="sh o" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20"/></svg>',
+};
+function ruleCard(n) {
+  const { tri, circ, trap, sq } = SHAPE, dot = '<span class="dot">·</span>';
+  return n === 1
+    ? `<div class="rulecard"><span class="rc-n">Правило 1</span>${F(tri, trap)}${dot}${F(circ, sq)}<span class="op">=</span>${F(tri + dot + circ, trap + dot + sq)}</div>`
+    : `<div class="rulecard"><span class="rc-n">Правило 2</span>${tri}${dot}${F(circ, sq)}<span class="op">=</span>${F(tri + dot + circ, sq)}</div>`;
+}
+
 const FRACTION_TRAINERS = {
   'Скорочення дробів': {
     hint: 'Скороти дріб до кінця: поділи чисельник і знаменник на їхній найбільший спільний дільник.',
@@ -306,6 +330,47 @@ const FRACTION_TRAINERS = {
     },
     solution: t => { const g = gcdI(t.r, t.l);
       return `${F(t.n1, t.d1)} ${t.op} ${F(t.n2, t.d2)} = ${F(t.c1, t.l)} ${t.op} ${F(t.c2, t.l)} = ${F(t.r, t.l)}${g > 1 ? ` = ${F(t.r / g, t.l / g)}` : ''}`; },
+  },
+  'Множення дробів': {
+    hint: 'Дріб на дріб: чисельник множимо на чисельник, знаменник — на знаменник. Число на дріб: число множимо лише на чисельник.',
+    make() {
+      if (Math.random() < .6) { // правило 1: дріб · дріб
+        let a, b, c, d;
+        do { b = ri(2, 9); d = ri(2, 9); a = ri(1, b - 1); c = ri(1, d - 1); } while (a * c === b * d);
+        return { kind: 'ff', a, b, c, d };
+      }
+      const d = ri(3, 12), c = ri(1, d - 1); // правило 2: число · дріб
+      return { kind: 'nf', n: ri(2, 6), c, d };
+    },
+    view(t) {
+      const pair = (x, y) => `<span class="pair">${x}<span class="dot">·</span>${y}</span>`;
+      if (t.kind === 'ff') return `${ruleCard(1)}<div class="eqn-row">${F(t.a, t.b)}<span class="op">·</span>${F(t.c, t.d)}<span class="op">=</span>
+        <span class="fr">${pair(inp('множник чисельника'), inp('множник чисельника'))}${pair(inp('множник знаменника'), inp('множник знаменника'))}</span>
+        <span class="op">=</span><span class="fr">${inp('чисельник результату')}${inp('знаменник результату')}</span></div>`;
+      return `${ruleCard(2)}<div class="eqn-row"><span>${t.n}</span><span class="op">·</span>${F(t.c, t.d)}<span class="op">=</span>
+        <span class="fr">${pair(inp('множник чисельника'), inp('множник чисельника'))}<span class="pair">${inp('знаменник')}</span></span>
+        <span class="op">=</span><span class="fr">${inp('чисельник результату')}${inp('знаменник результату')}</span></div>`;
+    },
+    check(t, v) {
+      const same = (x, y, p, q) => (x === p && y === q) || (x === q && y === p); // множники можна в будь-якому порядку
+      if (t.kind === 'ff') {
+        const [p1, p2, q1, q2, rn, rd] = v;
+        if (!same(p1, p2, t.a, t.c)) return { msg: `У чисельнику множимо чисельники: ${t.a} · ${t.c}.`, bad: [0, 1] };
+        if (!same(q1, q2, t.b, t.d)) return { msg: `У знаменнику множимо знаменники: ${t.b} · ${t.d}.`, bad: [2, 3] };
+        if (rd && rn * t.b * t.d === t.a * t.c * rd) return { ok: true };
+        return { msg: `Перевір множення: ${t.a} · ${t.c} = ?, ${t.b} · ${t.d} = ?`, bad: [4, 5] };
+      }
+      const [p1, p2, q, rn, rd] = v;
+      if (!same(p1, p2, t.n, t.c)) return { msg: `Число ${t.n} множимо на чисельник ${t.c}.`, bad: [0, 1] };
+      if (q !== t.d) return { msg: q === t.n * t.d ? 'Знаменник не змінюється! На число множимо лише чисельник.' : `Знаменник залишається ${t.d}.`, bad: [2] };
+      if (rd && rn * t.d === t.n * t.c * rd) return { ok: true };
+      return { msg: `Перевір множення: ${t.n} · ${t.c} = ?`, bad: [3, 4] };
+    },
+    solution(t) {
+      const g = (n, d) => { const k = gcdI(n, d); return k > 1 ? ` = ${F(n / k, d / k)}` : ''; };
+      if (t.kind === 'ff') return `${F(t.a, t.b)} · ${F(t.c, t.d)} = ${F(t.a + ' · ' + t.c, t.b + ' · ' + t.d)} = ${F(t.a * t.c, t.b * t.d)}${g(t.a * t.c, t.b * t.d)}`;
+      return `${t.n} · ${F(t.c, t.d)} = ${F(t.n + ' · ' + t.c, t.d)} = ${F(t.n * t.c, t.d)}${g(t.n * t.c, t.d)}`;
+    },
   },
 };
 
