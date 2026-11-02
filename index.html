@@ -198,7 +198,14 @@ label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
 .eqn:has(.rulecard){flex-direction:column;gap:14px}
 .eqn-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 10px}
 .fr .pair{display:flex;align-items:center;gap:2px}
-@media (max-width:480px){.rulecard{font-size:1.05rem}.eqn-row .fr input{width:2.1em}}
+.rc-note{flex-basis:100%;text-align:center;font-size:.85rem;font-weight:600;color:var(--blue)}
+.eqn-row{flex-wrap:nowrap}
+@media (max-width:480px){.rulecard{font-size:1.05rem;gap:4px 6px}.rulecard .rc-n{flex-basis:100%;text-align:center;margin:0}
+  .eqn-row{font-size:1.2rem;gap:4px}
+  .eqn-row .fr>span{padding:1px 3px}
+  .eqn-row .fr input{width:1.9em;font-size:1.05rem;padding:2px}
+  .eqn-row .dot{margin:0}}
+@media (max-width:360px){.eqn-row{font-size:1.05rem}.eqn-row .fr input{width:1.7em;font-size:.95rem}}
 .rank{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .rank b.r{color:var(--muted);text-align:right}
 .rank.me{border-color:var(--blue);background:var(--blue-soft)}
@@ -281,9 +288,10 @@ const SHAPE = {
 };
 function ruleCard(n) {
   const { tri, circ, trap, sq } = SHAPE, dot = '<span class="dot">·</span>';
+  const note = '<span class="rc-note">Наприкінці скороти дріб, якщо можна.</span>';
   return n === 1
-    ? `<div class="rulecard"><span class="rc-n">Правило 1</span>${F(tri, trap)}${dot}${F(circ, sq)}<span class="op">=</span>${F(tri + dot + circ, trap + dot + sq)}</div>`
-    : `<div class="rulecard"><span class="rc-n">Правило 2</span>${tri}${dot}${F(circ, sq)}<span class="op">=</span>${F(tri + dot + circ, sq)}</div>`;
+    ? `<div class="rulecard"><span class="rc-n">Правило 1</span>${F(tri, trap)}${dot}${F(circ, sq)}<span class="op">=</span>${F(tri + dot + circ, trap + dot + sq)}${note}</div>`
+    : `<div class="rulecard"><span class="rc-n">Правило 2</span>${tri}${dot}${F(circ, sq)}<span class="op">=</span>${F(tri + dot + circ, sq)}${note}</div>`;
 }
 
 const FRACTION_TRAINERS = {
@@ -332,15 +340,17 @@ const FRACTION_TRAINERS = {
       return `${F(t.n1, t.d1)} ${t.op} ${F(t.n2, t.d2)} = ${F(t.c1, t.l)} ${t.op} ${F(t.c2, t.l)} = ${F(t.r, t.l)}${g > 1 ? ` = ${F(t.r / g, t.l / g)}` : ''}`; },
   },
   'Множення дробів': {
-    hint: 'Дріб на дріб: чисельник множимо на чисельник, знаменник — на знаменник. Число на дріб: число множимо лише на чисельник.',
+    desc: 'Два правила: дріб на дріб і число на дріб. Не забувай скорочувати.',
+    hint: t => t.kind === 'ff' ? 'Чисельник множимо на чисельник, знаменник — на знаменник.' : 'Число множимо лише на чисельник, знаменник не змінюється.',
     make() {
       if (Math.random() < .6) { // правило 1: дріб · дріб
         let a, b, c, d;
         do { b = ri(2, 9); d = ri(2, 9); a = ri(1, b - 1); c = ri(1, d - 1); } while (a * c === b * d);
         return { kind: 'ff', a, b, c, d };
       }
-      const d = ri(3, 12), c = ri(1, d - 1); // правило 2: число · дріб
-      return { kind: 'nf', n: ri(2, 6), c, d };
+      let n, c, d; // правило 2: число · дріб (без цілих відповідей)
+      do { d = ri(3, 12); c = ri(1, d - 1); n = ri(2, 6); } while ((n * c) % d === 0);
+      return { kind: 'nf', n, c, d };
     },
     view(t) {
       const pair = (x, y) => `<span class="pair">${x}<span class="dot">·</span>${y}</span>`;
@@ -352,18 +362,20 @@ const FRACTION_TRAINERS = {
         <span class="op">=</span><span class="fr">${inp('чисельник результату')}${inp('знаменник результату')}</span></div>`;
     },
     check(t, v) {
+      // правильний, але нескорочений результат — підказка, а не помилка
+      const reduced = (n, d) => gcdI(n, d) === 1 ? { ok: true } : { soft: true, msg: `Правильно, але ${n}/${d} можна скоротити. Скороти до кінця!` };
       const same = (x, y, p, q) => (x === p && y === q) || (x === q && y === p); // множники можна в будь-якому порядку
       if (t.kind === 'ff') {
         const [p1, p2, q1, q2, rn, rd] = v;
         if (!same(p1, p2, t.a, t.c)) return { msg: `У чисельнику множимо чисельники: ${t.a} · ${t.c}.`, bad: [0, 1] };
         if (!same(q1, q2, t.b, t.d)) return { msg: `У знаменнику множимо знаменники: ${t.b} · ${t.d}.`, bad: [2, 3] };
-        if (rd && rn * t.b * t.d === t.a * t.c * rd) return { ok: true };
+        if (rd && rn * t.b * t.d === t.a * t.c * rd) return reduced(rn, rd);
         return { msg: `Перевір множення: ${t.a} · ${t.c} = ?, ${t.b} · ${t.d} = ?`, bad: [4, 5] };
       }
       const [p1, p2, q, rn, rd] = v;
       if (!same(p1, p2, t.n, t.c)) return { msg: `Число ${t.n} множимо на чисельник ${t.c}.`, bad: [0, 1] };
       if (q !== t.d) return { msg: q === t.n * t.d ? 'Знаменник не змінюється! На число множимо лише чисельник.' : `Знаменник залишається ${t.d}.`, bad: [2] };
-      if (rd && rn * t.d === t.n * t.c * rd) return { ok: true };
+      if (rd && rn * t.d === t.n * t.c * rd) return reduced(rn, rd);
       return { msg: `Перевір множення: ${t.n} · ${t.c} = ?`, bad: [3, 4] };
     },
     solution(t) {
@@ -511,7 +523,7 @@ function trainersView() {
   const fromTeacher = data.trainers.map((t, i) => `<div class="item"><div class="grow"><b>${esc(t.name)}</b><small>${t.questions.length} питань від учителя</small></div>
     ${me.done.includes(t.name) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startTrainer(${i})">Почати</button></div>`).join('');
   const gens = Object.keys(GENERATORS).map(g => `<div class="item"><div class="grow"><b>${g}</b><small>10 нових прикладів щоразу</small></div><button class="btn sm ghost" onclick="startGen('${g}')">Почати</button></div>`).join('');
-  const fracs = Object.entries(FRACTION_TRAINERS).map(([name, T]) => `<div class="item"><div class="grow"><b>${name}</b><small>${T.hint}</small></div>
+  const fracs = Object.entries(FRACTION_TRAINERS).map(([name, T]) => `<div class="item"><div class="grow"><b>${name}</b><small>${T.desc || T.hint}</small></div>
     ${me.done.includes(name) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startFrac('${name}')">Почати</button></div>`).join('');
   return `<h2>Від учителя</h2><div class="list">${fromTeacher || '<p class="muted">Учитель ще не додав тренажерів.</p>'}</div>
     <h2>Дроби</h2><div class="list">${fracs}</div>
@@ -554,7 +566,7 @@ function gameView() {
   return `<div class="stack"><div class="top" style="margin:0"><button class="btn ghost sm" onclick="quit()">← Назад</button><b>${esc(game.title)}</b></div>
     <div class="dots">${game.items.map((_, k) => `<i class="${game.results[k] === true ? 'ok' : game.results[k] === false ? 'no' : ''}"></i>`).join('')}</div>
     <div class="qcard"><div class="qnum">${game.lesson ? 'Крок' : 'Питання'} ${game.i + 1} з ${game.items.length}</div>
-      ${game.frac ? `<p class="muted" style="margin:0">${game.frac.hint}</p><div class="eqn">${game.frac.view(it)}</div>
+      ${game.frac ? `<p class="muted" style="margin:0">${typeof game.frac.hint === 'function' ? game.frac.hint(it) : game.frac.hint}</p><div class="eqn">${game.frac.view(it)}</div>
         <div class="fb" id="fb"></div>
         <div class="formrow" style="justify-content:center"><button class="btn" id="fcheck">Перевірити</button><button class="btn ghost" id="fshow" hidden>Показати розв’язок</button></div>`
       : `${it.text ? `<div class="text">${esc(it.text)}</div>` : ''}
