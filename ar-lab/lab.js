@@ -205,7 +205,7 @@
   function sceneMarkup(marker, spec) {
     // панель не має затуляти модель: на широкому екрані модель праворуч, на телефоні — вище й далі
     const pos = marker ? '0 0 0' : innerWidth > 760 ? '.9 .25 -3.6' : innerWidth < innerHeight ? '0 1.5 -5.5' : '0 .25 -4.5';
-    const model = `<a-entity id="model" position="${pos}" ${marker ? 'scale=".45 .45 .45"' : ''}>
+    const model = `<a-entity id="model" position="${pos}" ${marker ? 'scale=".3 .3 .3"' : ''}>
         <a-entity id="spin" position="0 1.1 0" rotation="${marker ? '0 0 0' : spec.view || '18 -25 0'}" lab-drag>
           <a-entity id="content" position="0 -1.1 0" lab-content></a-entity></a-entity></a-entity>`;
     if (marker) return `<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; cameraParametersUrl: data/camera_para.dat"

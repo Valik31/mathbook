@@ -62,9 +62,8 @@ a-scene{position:fixed!important;inset:0}
 .in-vr #ui{display:none}
 .in-ar .lab-panel{max-height:38vh}
 .in-ar .lab-back{display:none}
-/* AR.js: відео камери під сценою */
+/* AR.js: відео камери під сценою (AR.js сам ставить йому z-index: -2) */
 body.marker{overflow:hidden}
-body.marker video{z-index:0!important}
 
 /* ---------- головна сторінка лабораторії ---------- */
 .home{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;min-height:100vh}
