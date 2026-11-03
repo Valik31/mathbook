@@ -218,6 +218,25 @@ label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
 .steps3 ol{margin:0;padding-left:1.3em;text-align:left;font-size:.95rem;font-weight:600;line-height:1.6}
 .rulecard.steps3{font-size:1rem}
 .eqn:has(.rulecard) .eqn-row+.eqn-row{margin-top:-4px}
+.export{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px}
+.export .grow{flex:1;min-width:180px} .export small{display:block}
+.pincards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:0}
+.pincard{border:1.5px dashed #8892B0;padding:14px 16px;display:grid;gap:8px;background:#fff;color:#1A2140;break-inside:avoid}
+.pc-top{display:flex;justify-content:space-between;font-size:.8rem;color:#5A6384}
+.pc-top b{color:#2646D4;font-family:"Unbounded",sans-serif}
+.pc-name{font-size:1.25rem;font-weight:700}
+.pc-pin{display:flex;align-items:baseline;gap:10px}
+.pc-pin span{font-size:.75rem;font-weight:700;letter-spacing:.1em;color:#5A6384}
+.pc-pin b{font:700 1.8rem ui-monospace,Menlo,monospace;letter-spacing:.2em}
+.pc-how{font-size:.78rem;color:#5A6384;line-height:1.35}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff!important;background-image:none!important}
+  .wrap{max-width:none;padding:0}
+  .top,#banner,nav.tabs,.msg,.noprint{display:none!important}
+  .pincards{grid-template-columns:repeat(2,1fr)}
+  .pincard{border-color:#666}
+}
 .rank{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .rank b.r{color:var(--muted);text-align:right}
 .rank.me{border-color:var(--blue);background:var(--blue-soft)}
@@ -353,6 +372,7 @@ const FRACTION_TRAINERS = {
       return `${F(t.n1, t.d1)} ${t.op} ${F(t.n2, t.d2)} = ${F(t.c1, t.l)} ${t.op} ${F(t.c2, t.l)} = ${F(t.r, t.l)}${g > 1 ? ` = ${F(t.r / g, t.l / g)}` : ''}`; },
   },
   'Множення дробів': {
+    teacher: true,
     desc: 'Два правила: дріб на дріб і число на дріб. Не забувай скорочувати.',
     hint: t => t.kind === 'ff' ? 'Чисельник множимо на чисельник, знаменник — на знаменник.' : 'Число множимо лише на чисельник, знаменник не змінюється.',
     make() {
@@ -997,7 +1017,32 @@ function teacherView() {
   const m = teacher.msg;
   return `<div class="stack"><nav class="tabs">${tabs.map(([k, l]) => `<button class="tab ${teacher.tab === k ? 'on' : ''}" onclick="tTab('${k}')">${l}</button>`).join('')}</nav>
     ${m ? `<div class="msg ${m.ok ? 'ok' : 'no'}">${esc(m.text)}</div>` : ''}
-    ${{ overview: tOverview, students: tStudents, trainers: tTrainers, settings: tSettings }[teacher.tab]()}</div>`;
+    ${{ overview: tOverview, students: tStudents, trainers: tTrainers, settings: tSettings, print: tPrint }[teacher.tab]()}</div>`;
+}
+
+/* ---------- друк і експорт PIN-кодів ---------- */
+const siteUrl = () => (location.origin + location.pathname).replace(/index\.html$/, '').replace(/^https?:\/\//, '');
+const byName = () => [...teacher.d.students].sort((a, b) => a.name.localeCompare(b.name, 'uk'));
+function tPrint() {
+  const cls = teacher.d.settings.className, url = siteUrl();
+  const cards = byName().map(s => `<div class="pincard"><div class="pc-top"><b>MathBook</b><span>${esc(cls)}</span></div>
+      <div class="pc-name">${esc(s.name)}</div>
+      <div class="pc-pin"><span>PIN</span><b>${esc(s.pin)}</b></div>
+      <div class="pc-how">Відкрий <b>${esc(url)}</b>, обери своє ім’я і введи PIN. Нікому його не показуй.</div></div>`).join('');
+  return `<div class="noprint formrow" style="align-items:center"><button class="btn ghost sm" onclick="tTab('students')">← До списку учнів</button>
+      <span class="muted grow">${teacher.d.students.length} карток · вирізайте по пунктирній лінії</span>
+      <button class="btn" onclick="window.print()">Надрукувати</button></div>
+    <div class="pincards">${cards}</div>`;
+}
+function downloadPins() {
+  // крапка з комою і BOM — щоб український Excel одразу відкрив колонки й кирилицю
+  const rows = [['Ім’я', 'PIN'], ...byName().map(s => [s.name, s.pin])];
+  const csv = '\ufeff' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'mathbook-pin-kody.csv'; // латиницею: браузери відкидають назви з кирилицею й пробілами
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 function tOverview() {
@@ -1031,6 +1076,9 @@ function tStudents() {
       <div class="formrow"><input class="inp" id="sname" maxlength="40" placeholder="Ім’я та перша літера прізвища, напр. Оля К.">
       <input class="inp" id="spin" inputmode="numeric" maxlength="6" placeholder="PIN (якщо порожньо — згенерується)" style="max-width:260px">
       <button class="btn" onclick="addStudent()">Додати</button></div></div>
+    ${st.length ? `<div class="card export"><div class="grow"><b>Роздати PIN-коди</b><small class="muted">Картки для вирізання або список для Excel</small></div>
+      <button class="btn sm" onclick="tTab('print')">Картки з PIN для друку</button>
+      <button class="btn ghost sm" onclick="downloadPins()">Завантажити список (Excel)</button></div>` : ''}
     <div class="top" style="margin:0"><h2>Список класу (${st.length})</h2><div class="right">
       <label class="chk"><input type="checkbox" ${teacher.showPins ? 'checked' : ''} onchange="teacher.showPins=this.checked;render()"> Показати PIN-коди</label></div></div>
     <div class="list">${st.map(s => `<div class="item"><div class="grow"><b>${esc(s.name)}</b></div>
