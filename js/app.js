@@ -2,7 +2,7 @@
 
 /* ---------- стан ---------- */
 let data = null;          // усе з таблиці: клас, учні, тренажери, уроки, рейтинг
-let me = null;            // { name, pin, xp, done, rw } — rw: зірки, досягнення, покупки
+let me = null;            // { name, pin, xp, done }
 let tab = 'home';
 let game = null;          // поточний тренажер або урок
 let loginMode = 'student'; // 'student' або 'teacher' — яку форму входу показати
@@ -30,16 +30,15 @@ function render() {
   $('#banner').innerHTML = API_URL ? '' : '<div class="banner"><b>Демо-режим.</b> Вставте адресу Apps Script у <code>API_URL</code>, щоб підключити Google Таблицю. Учень: Оля К., PIN 1234. Вчитель: пароль «вчитель».</div>';
   $('#who').innerHTML = teacher ? `<span class="guest-tag">Вчитель</span><button class="btn ghost sm" onclick="teacherLogout()">Вийти</button>` : !me ? '' : me.guest
     ? `<span class="guest-tag">Гість</span><button class="btn ghost sm" onclick="logout()">Увійти з PIN</button>`
-    : `<button class="stars-chip" onclick="setTab('rewards')" title="Мої зірки">★ ${me.rw ? me.rw.stars : 0}</button><span class="muted">${esc(me.name)}</span><button class="btn ghost sm" onclick="logout()">Вийти</button>`;
+    : `<span class="muted">${esc(me.name)}</span><button class="btn ghost sm" onclick="logout()">Вийти</button>`;
   const m = $('#main');
   if (!data) { m.innerHTML = ''; return; }
   if (teacher) { m.innerHTML = teacherView(); bindTeacher(); return; }
   if (!me) { m.innerHTML = loginMode === 'teacher' ? teacherLoginView() : loginView(); return; }
   if (game) { m.innerHTML = game.done ? resultView() : gameView(); bindGame(); return; }
-  if (tab === 'cert' && certItem) { m.innerHTML = `<div class="stack">${certView()}</div>`; return; }
-  const tabs = [['home', 'Головна'], ['trainers', 'Тренажери'], ['lessons', 'Уроки'], ['rewards', 'Нагороди'], ['rating', 'Рейтинг']];
+  const tabs = [['home', 'Головна'], ['trainers', 'Тренажери'], ['lessons', 'Уроки'], ['rating', 'Рейтинг']];
   m.innerHTML = `<div class="stack"><nav class="tabs">${tabs.map(([k, l]) => `<button class="tab ${tab === k ? 'on' : ''}" onclick="setTab('${k}')">${l}</button>`).join('')}</nav>
-    ${({ home: homeView, trainers: trainersView, lessons: lessonsView, rewards: rewardsView, rating: ratingView }[tab] || homeView)()}</div>`;
+    ${{ home: homeView, trainers: trainersView, lessons: lessonsView, rating: ratingView }[tab]()}</div>`;
 }
 function setTab(t) { tab = t; render(); }
 
@@ -60,11 +59,11 @@ async function login() {
   if (!name || !pin) { $('#err').textContent = 'Обери ім’я і введи PIN.'; return; }
   const r = await withLoader('Шукаю твою книжку…', () => api('login', { name, pin }));
   if (!r.ok) { $('#err').textContent = r.error; return; }
-  me = { name, pin, xp: r.xp, done: r.done, rw: r.rewards };
+  me = { name, pin, xp: r.xp, done: r.done };
   localStorage.setItem('mb-me', JSON.stringify({ name, pin }));
   render();
 }
-function logout() { me = null; game = null; certItem = null; tab = 'home'; localStorage.removeItem('mb-me'); render(); }
+function logout() { me = null; game = null; localStorage.removeItem('mb-me'); render(); }
 
 function guestNote() {
   return `<div class="guest-note"><p><b>Режим гостя.</b> Бали зберігаються лише на цьому пристрої й не йдуть у рейтинг. Щоб змагатися з класом, попроси в учителя свій PIN.</p><button class="btn sm" onclick="logout()">Увійти з PIN</button></div>`;
@@ -77,7 +76,6 @@ function homeView() {
     <div class="list">
       <div class="item"><div class="grow"><b>Тренажери</b><small>За кожну правильну відповідь — ${data.xpPerAnswer} XP</small></div><button class="btn sm" onclick="setTab('trainers')">Тренуватися</button></div>
       <div class="item"><div class="grow"><b>Уроки</b><small>Пояснення з питаннями крок за кроком</small></div><button class="btn sm" onclick="setTab('lessons')">Вчитися</button></div>
-      ${me.guest ? '' : `<div class="item stars-item"><div class="grow"><b>★ ${me.rw ? me.rw.stars : 0} зірок · досягнень ${me.rw ? me.rw.achievements.length : 0} з ${RW_ACHIEVEMENTS.length}</b><small>Обмінюй зірки на рамки, звання, сертифікати і бонус до оцінки</small></div><button class="btn sm" onclick="setTab('rewards')">Нагороди</button></div>`}
       <div class="item lab-item"><div class="grow"><b>AR/VR-лабораторія: циліндр</b><small>3D-сцени: елементи, розгортка, перерізи, вписані тіла — у браузері, VR-окулярах або через камеру телефона</small></div><a class="btn sm" href="ar-lab/index.html">Відкрити</a></div>
     </div>`;
 }
@@ -102,7 +100,7 @@ function lessonsView() {
 }
 function ratingView() {
   return `${me.guest ? guestNote() : ''}<div class="top" style="margin:0"><h2>Рейтинг класу</h2><div class="right"><button class="btn ghost sm" onclick="refresh()">Оновити</button></div></div>
-    <div class="list">${data.rating.map((r, i) => `<div class="rank ${r.name === me.name ? 'me' : ''} ${i === 0 && r.xp > 0 ? 'top1' : ''}"><b class="r">${i + 1}</b>${avatar(r.name, r.frame)}<span class="rn">${esc(r.name)}${r.name === me.name ? ' (ти)' : ''} <small class="muted">· ${levelOf(r.xp).name}</small>${r.title ? `<span class="title-pill sm">${esc(r.title)}</span>` : ''}</span><b>${r.xp} XP</b></div>`).join('')}</div>`;
+    <div class="list">${data.rating.map((r, i) => `<div class="rank ${r.name === me.name ? 'me' : ''} ${i === 0 && r.xp > 0 ? 'top1' : ''}"><b class="r">${i + 1}</b><span>${esc(r.name)}${r.name === me.name ? ' (ти)' : ''} <small class="muted">· ${levelOf(r.xp).name}</small></span><b>${r.xp} XP</b></div>`).join('')}</div>`;
 }
 async function refresh() { data = await withLoader('Оновлюю рейтинг…', () => api('init')); render(); }
 
@@ -215,12 +213,8 @@ async function submitResult(correct, total) {
   }
   const r = await withLoader('Записую результат у журнал…', () => api('result', { name: me.name, pin: me.pin, trainer: game.title, correct, total }));
   if (!r.ok) { alert(r.error); return; }
-  const was = me.rw || { earned: 0, achievements: [] };
   me.xp = r.xp; me.done = r.done; data.rating = r.rating;
-  if (r.rewards) me.rw = r.rewards;
-  game.done = { correct, total, gained: r.gained, levelUp: levelOf(me.xp).n > before,
-    stars: me.rw ? me.rw.earned - was.earned : 0, // разом із зірками за нові досягнення
-    newAch: me.rw ? RW_ACHIEVEMENTS.filter(a => me.rw.achievements.includes(a.id) && !was.achievements.includes(a.id)) : [] };
+  game.done = { correct, total, gained: r.gained, levelUp: levelOf(me.xp).n > before };
   render();
 }
 function resultView() {
@@ -228,9 +222,7 @@ function resultView() {
   return `<div class="qcard"><div class="qnum">${esc(game.title)}</div>
     <div class="big">${d.correct}/${d.total}</div>
     <h2>${d.correct === d.total ? 'Бездоганно!' : d.correct / d.total >= .7 ? 'Добра робота!' : 'Варто потренуватися ще'}</h2>
-    <div class="row-c"><span class="xp">+${d.gained} XP</span>${d.stars ? `<span class="stars">+${d.stars} ★</span>` : ''}</div>
-    ${!me.guest && d.stars === 0 ? '<p class="muted" style="margin:0;font-size:.88rem">Сьогодні цей тренажер уже давав зірки. Спробуй інший, щоб заробити ще!</p>' : ''}
-    ${(d.newAch || []).length ? `<div class="new-ach"><b>Нове досягнення!</b>${d.newAch.map(a => `<div class="ach got"><span class="ach-i">${a.icon}</span><div><b>${a.name}</b><small>${a.desc}</small></div><span class="ach-s">+${a.stars} ★</span></div>`).join('')}</div>` : ''}
+    <div><span class="xp">+${d.gained} XP</span></div>
     ${d.levelUp ? `<p><b>Новий рівень: ${levelOf(me.xp).name}!</b></p>` : ''}
     ${me.guest ? '<p class="muted" style="margin:0">Ти в режимі гостя, тому бали не записані в рейтинг класу.</p>' : ''}
     <div><button class="btn" onclick="quit()">Готово</button></div></div>`;

@@ -72,12 +72,11 @@ function tStats() {
 }
 
 function teacherView() {
-  const pending = (teacher.d.purchases || []).filter(p => p.status === 'очікує').length;
-  const tabs = [['overview', 'Огляд'], ['students', 'Учні'], ['trainers', 'Тренажери'], ['rewards', `Нагороди${pending ? ` (${pending})` : ''}`], ['settings', 'Налаштування']];
+  const tabs = [['overview', 'Огляд'], ['students', 'Учні'], ['trainers', 'Тренажери'], ['settings', 'Налаштування']];
   const m = teacher.msg;
   return `<div class="stack"><nav class="tabs">${tabs.map(([k, l]) => `<button class="tab ${teacher.tab === k ? 'on' : ''}" onclick="tTab('${k}')">${l}</button>`).join('')}</nav>
     ${m ? `<div class="msg ${m.ok ? 'ok' : 'no'}">${esc(m.text)}</div>` : ''}
-    ${{ overview: tOverview, students: tStudents, trainers: tTrainers, settings: tSettings, print: tPrint, rewards: tRewards }[teacher.tab]()}</div>`;
+    ${{ overview: tOverview, students: tStudents, trainers: tTrainers, settings: tSettings, print: tPrint }[teacher.tab]()}</div>`;
 }
 
 /* ---------- друк і експорт PIN-кодів ---------- */
@@ -109,11 +108,10 @@ function tOverview() {
   const S = tStats();
   const rows = S.students.map(p => {
     const open = teacher.open === p.name;
-    const stars = rwSummary(p.hist, (teacher.d.purchases || []).filter(x => x.name === p.name)).balance;
-    const hist = open ? `<tr class="hist"><td colspan="7">${p.hist.length ? p.hist.slice(-15).reverse().map(r =>
+    const hist = open ? `<tr class="hist"><td colspan="6">${p.hist.length ? p.hist.slice(-15).reverse().map(r =>
       `${fmtDate(r.date)} · <b>${esc(r.trainer)}</b> · ${r.correct}/${r.total} · +${r.xp} XP`).join('<br>') : 'Ще нічого не проходив.'}</td></tr>` : '';
     return `<tr class="click" onclick="teacher.open=${open ? 'null' : esc(JSON.stringify(p.name))};render()">
-      <td>${open ? '▾' : '▸'} ${esc(p.name)}</td><td class="n">${p.xp}</td><td class="n">${stars}</td><td>${levelOf(p.xp).name}</td><td class="n">${p.attempts}</td>
+      <td>${open ? '▾' : '▸'} ${esc(p.name)}</td><td class="n">${p.xp}</td><td>${levelOf(p.xp).name}</td><td class="n">${p.attempts}</td>
       <td>${p.total ? meter(S.pct(p.correct, p.total)) : '—'}</td><td>${fmtDate(p.last)}</td></tr>${hist}`;
   }).join('');
   return `<div class="tiles">
@@ -123,7 +121,7 @@ function tOverview() {
       <div class="tile"><b>${S.accuracy}%</b><span>середня точність</span></div></div>
     <div class="top" style="margin:0"><h2>Учні</h2><div class="right"><button class="btn ghost sm" onclick="tDo('overview',{},'Оновлюю…')">Оновити</button></div></div>
     <p class="muted" style="margin:-8px 0 0;font-size:.85rem">Натисніть на учня, щоб побачити його історію.</p>
-    ${S.students.length ? `<div class="tbl"><table><thead><tr><th>Учень</th><th class="n">XP</th><th class="n">★</th><th>Рівень</th><th class="n">Спроб</th><th>Точність</th><th>Останній раз</th></tr></thead><tbody>${rows}</tbody></table></div>`
+    ${S.students.length ? `<div class="tbl"><table><thead><tr><th>Учень</th><th class="n">XP</th><th>Рівень</th><th class="n">Спроб</th><th>Точність</th><th>Останній раз</th></tr></thead><tbody>${rows}</tbody></table></div>`
       : '<p class="muted">Учнів ще немає. Додайте їх на вкладці «Учні».</p>'}
     <h2>Найважчі теми</h2>
     ${S.topics.length ? `<div class="tbl"><table><thead><tr><th>Тренажер або урок</th><th class="n">Спроб</th><th>Середній результат</th></tr></thead><tbody>
@@ -209,20 +207,3 @@ async function saveSettings() {
   }
 }
 function bindTeacher() {}
-
-/* ---------- нагороди: запити на бонус до оцінки, історія обмінів ---------- */
-function tRewards() {
-  const all = (teacher.d.purchases || []).slice().reverse(), pending = all.filter(p => p.status === 'очікує');
-  const row = p => `<tr><td>${fmtDate(p.date)}</td><td>${esc(p.name)}</td><td>${esc(p.reward)}</td><td class="n">${p.price}</td>
-    <td>${p.status === 'видано' ? '<span class="tag">видано</span>' : p.status === 'очікує' ? '<span class="tag wait">очікує</span>' : '<span class="tag no">відхилено</span>'}</td></tr>`;
-  return `<h2>Запити на підтвердження</h2>
-    ${pending.length ? `<div class="list">${pending.map(p => `<div class="item"><div class="grow"><b>${esc(p.name)}</b><small>${esc(p.reward)} · ${p.price} ★ · ${fmtDate(p.date)}</small></div>
-      <button class="btn sm" onclick="tDo('decidePurchase',{id:${esc(JSON.stringify(p.id))},approve:true},'Зберігаю…','Видано. Не забудьте врахувати бонус у журналі.')">Видати</button>
-      <button class="btn ghost sm" onclick="tDo('decidePurchase',{id:${esc(JSON.stringify(p.id))},approve:false},'Зберігаю…','Відхилено, зірки повернуто учневі.')">Відхилити</button></div>`).join('')}</div>`
-      : '<p class="muted">Нових запитів немає. Тут з’являться бонуси до оцінки, які учні обміняли на зірки.</p>'}
-    <h2>Історія обмінів</h2>
-    ${all.length ? `<div class="tbl"><table><thead><tr><th>Дата</th><th>Учень</th><th>Нагорода</th><th class="n">★</th><th>Статус</th></tr></thead><tbody>${all.slice(0, 50).map(row).join('')}</tbody></table></div>`
-      : '<p class="muted">Учні ще нічого не обмінювали.</p>'}
-    <div class="card" style="font-size:.9rem"><b>Як змінити нагороди і ціни.</b> Відкрийте аркуш «Нагороди» в таблиці: назва, тип (рамка / звання / сертифікат / оцінка), ціна в зірках, ліміт на місяць, параметр і опис.
-      Для рамки параметр — вигляд: gold, space, fire, mint або rainbow. Для звання і сертифіката — текст звання.</div>`;
-}
