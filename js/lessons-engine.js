@@ -5,12 +5,12 @@ const fx = s => String(s)
   .replace(/\{(\d+) (\d+)\/(\d+)\}/g, (_, w, n, d) => `<span class="mixed">${w}${F(n, d)}</span>`)
   .replace(/\{(\d+)\/(\d+)\}/g, (_, n, d) => F(n, d));
 const fxText = s => String(s).replace(/\{(\d+) (\d+)\/(\d+)\}/g, '$1 $2/$3').replace(/\{(\d+)\/(\d+)\}/g, '$1/$2');
-const TASK_TYPES = ['choice', 'frac', 'area', 'tf', 'match'];
+const TASK_TYPES = ['choice', 'frac', 'area', 'tf', 'match', 'num'];
 const isTask = sl => TASK_TYPES.includes(sl.type);
 
 function startSlides(id) {
   const L = SLIDE_LESSONS.find(l => l.id === id);
-  game = { slides: true, L, title: 'Урок: ' + L.title, view: 'cover', sec: 0, k: 0, tasks: {}, revealed: {}, seen: {}, area: { a: 1, b: 2, c: 1, d: 3 }, results: [] };
+  game = { slides: true, L, title: 'Урок: ' + L.title, view: 'cover', sec: 0, k: 0, tasks: {}, revealed: {}, seen: {}, area: { a: 1, b: 2, c: 1, d: 3 }, watched: {}, results: [] };
   render();
 }
 const slideKey = () => game.sec + '-' + game.k;
@@ -32,8 +32,8 @@ function slidesView() {
   const L = game.L, head = (back, label) => `<div class="top" style="margin:0"><button class="btn ghost sm" onclick="${back}">←&nbsp;${label}</button><b>${esc(L.title)}</b></div>`;
   if (game.view === 'cover') {
     return `<div class="stack">${head('quit()', 'Уроки')}
-      <div class="cover"><div class="cover-art">${F(2, 3)}<span>·</span>${F(3, 4)}<span>=</span>${F(1, 2)}</div>
-        <div class="cover-text"><div class="eyebrow">${esc(L.grade || '')} · інтерактивний урок</div><h1>${esc(L.title)}</h1><p>${esc(L.intro || '')}</p>
+      <div class="cover"><div class="cover-art">${L.cover ? fx(L.cover) : `${F(2, 3)}<span>·</span>${F(3, 4)}<span>=</span>${F(1, 2)}`}</div>
+        <div class="cover-text"><div class="eyebrow">${esc(L.grade || '')} · ${isVideoLesson(L) ? 'відеоурок' : 'інтерактивний урок'}</div><h1>${esc(L.title)}</h1><p>${esc(L.intro || '')}</p>
         <button class="btn" onclick="game.view='menu';render()">Почати урок</button></div></div></div>`;
   }
   if (game.view === 'menu') {
@@ -51,11 +51,12 @@ function slidesView() {
   const sec = L.sections[game.sec], sl = sec.slides[game.k], key = slideKey();
   game.seen[key] = true;
   const last = game.sec === L.sections.length - 1 && game.k === sec.slides.length - 1;
+  const mustWatch = sl.type === 'video' && sl.mustWatch && hasVideo(sl) && !game.watched[key]; // «Далі» — лише після перегляду
   return `<div class="stack">${head("game.view='menu';render()", 'Зміст')}
     <div class="slide-meta"><span class="pill-sec">${esc(sec.name)}</span><span class="muted">${game.k + 1} / ${sec.slides.length}</span></div>
     <div class="slide">${slideBody(sl, key)}</div>
     <div class="slide-nav"><button class="btn ghost" onclick="slideStep(-1)" ${game.sec === 0 && game.k === 0 ? 'disabled' : ''}>← Назад</button>
-      ${last ? '' : `<button class="btn" onclick="slideStep(1)">${game.k + 1 < sec.slides.length ? 'Далі →' : `До розділу «${esc(L.sections[game.sec + 1].name)}» →`}</button>`}</div></div>`;
+      ${last ? '' : `<button class="btn" id="slideNext" onclick="slideStep(1)" ${mustWatch ? 'disabled' : ''}>${game.k + 1 < sec.slides.length ? 'Далі →' : `До розділу «${esc(L.sections[game.sec + 1].name)}» →`}</button>`}</div></div>`;
 }
 
 function areaGrid(a, b, c, d) {
@@ -85,10 +86,12 @@ function areaSet(k, dir) {
 function answerHtml(sl) {
   if (sl.type === 'choice') return esc(sl.options[sl.answer]);
   if (sl.type === 'frac' || sl.type === 'area') return F(sl.answer[0], sl.answer[1]);
+  if (sl.type === 'num') return esc(firstAnswer(sl.answer)) + (sl.unit ? ' ' + esc(sl.unit) : '');
   if (sl.type === 'tf') return sl.statements.map(([t, v]) => `${fx(t)} — <b>${v ? 'правда' : 'неправда'}</b>`).join('<br>');
   if (sl.type === 'match') return sl.pairs.map(([l, r]) => `${fx(l)} = ${fx(r)}`).join('<br>');
 }
 function slideBody(sl, key) {
+  if (sl.type === 'video') return videoBody(sl, key);
   if (sl.type === 'theory') return `<h2>${esc(sl.title)}</h2><div class="theory">${fx(sl.html)}</div>${sl.widget === 'area' ? `<div id="areaW">${areaWidget()}</div>` : ''}`;
   if (sl.type === 'example') {
     const r = game.revealed[key] || 0;
@@ -112,6 +115,7 @@ function slideBody(sl, key) {
   let body = '';
   if (sl.type === 'choice') body = `<div class="opts">${sl.options.map((o, i) => `<button class="opt" onclick="checkTask(${i})">${fx(o)}</button>`).join('')}</div>`;
   if (sl.type === 'frac' || sl.type === 'area') body = `${sl.type === 'area' ? areaGrid(...sl.model) : ''}<div class="eqn"><span class="fr">${inp('чисельник')}${inp('знаменник')}</span></div>`;
+  if (sl.type === 'num') body = `<div class="eqn"><input class="num-in" inputmode="decimal" autocomplete="off" placeholder="?" aria-label="Відповідь">${sl.unit ? `<span class="unit">${esc(sl.unit)}</span>` : ''}</div>`;
   if (sl.type === 'tf') body = `<div class="tfs">${sl.statements.map(([t], i) => `<div class="tf" data-i="${i}"><span>${fx(t)}</span><span class="tfb"><button onclick="tfPick(this,1)">Правда</button><button onclick="tfPick(this,0)">Неправда</button></span></div>`).join('')}</div>`;
   if (sl.type === 'match') {
     const rights = shuffle(sl.pairs.map(p => p[1]));
@@ -136,6 +140,11 @@ function checkTask(choice) {
     ok = same && (!sl.reduce || gcdI(n, d) === 1);
     if (same && !ok) soft = 'Правильно, але дріб можна скоротити. Скороти до кінця.';
     ins.forEach(el => el.classList.toggle('no', !same));
+  } else if (sl.type === 'num') {
+    const el = $('.slide .num-in'), v = el.value.trim();
+    if (!v) { fb.textContent = 'Впиши відповідь числом.'; fb.className = 'fb warn'; return; }
+    ok = isRight(v, String(sl.answer)); // 0,5 = 0.5 = 1/2
+    el.classList.toggle('no', !ok);
   } else if (sl.type === 'tf') {
     const rows = [...document.querySelectorAll('.tf')];
     if (rows.some(r => r.dataset.v === undefined)) { fb.textContent = 'Дай відповідь на кожне твердження.'; fb.className = 'fb warn'; return; }
@@ -161,8 +170,78 @@ async function finishSlides() {
   await submitResult(sc.correct, sc.total);
 }
 function bindSlides() {
+  if (game.view !== 'slide') return;
+  const sl = game.L.sections[game.sec].slides[game.k];
+  if (sl.type === 'video') return bindVideo(sl);
   const ins = [...document.querySelectorAll('.slide .eqn input')];
   if (!ins.length) return;
   ins[0].focus({ preventScroll: true });
   ins.forEach((el, k) => el.addEventListener('keydown', e => { if (e.key !== 'Enter') return; e.preventDefault(); k < ins.length - 1 ? ins[k + 1].focus() : checkTask(); }));
+}
+
+/* ---------- відео в уроці: YouTube (рекомендовано) або файл з папки videos/ ---------- */
+const hasVideo = sl => !!(sl.youtube || sl.src);
+const isVideoLesson = L => L.sections.some(s => s.slides.some(sl => sl.type === 'video'));
+// Приймаємо будь-яке посилання YouTube або сам ідентифікатор відео
+function ytId(s) {
+  const m = String(s).match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
+  return m ? m[1] : String(s).trim();
+}
+// Час: 135, «2:15» або «1:02:15» → секунди
+function toSec(t) {
+  if (t === undefined || t === null || t === '') return 0;
+  return String(t).split(':').reduce((s, x) => s * 60 + (Number(x) || 0), 0);
+}
+let ytReady = null;
+function loadYT() {
+  if (ytReady) return ytReady;
+  ytReady = new Promise(resolve => {
+    if (window.YT && window.YT.Player) return resolve(window.YT);
+    window.onYouTubeIframeAPIReady = () => resolve(window.YT);
+    const sc = document.createElement('script');
+    sc.src = 'https://www.youtube.com/iframe_api';
+    sc.onerror = () => { ytReady = null; resolve(null); };
+    document.head.appendChild(sc);
+  });
+  return ytReady;
+}
+function videoBody(sl, key) {
+  const range = sl.start || sl.end ? `<span class="muted">${sl.start ? 'з ' + sl.start : ''}${sl.end ? ' до ' + sl.end : ''}</span>` : '';
+  let player;
+  if (sl.youtube) player = '<div class="video"><div id="ytp"></div></div>';
+  else if (sl.src) player = `<div class="video"><video id="vid" controls playsinline preload="metadata" src="${esc(sl.src)}"></video></div>`;
+  else player = `<div class="video placeholder"><b>Тут буде відео</b>${sl.script ? `<p class="muted">План відео для вчителя:</p><div class="script">${fx(sl.script)}</div>` : ''}</div>`;
+  const wait = sl.mustWatch && hasVideo(sl) && !game.watched[key] ? '<p class="muted" id="vwait">Досмотри відео до кінця — тоді відкриється кнопка «Далі».</p>' : '';
+  return `<div class="video-head"><h2>${esc(sl.title)}</h2>${range}</div>${player}${wait}${sl.text ? `<div class="video-note">${fx(sl.text)}</div>` : ''}`;
+}
+function videoWatched() {
+  game.watched[slideKey()] = true;
+  const b = $('#slideNext'); if (b) b.disabled = false;
+  const w = $('#vwait'); if (w) w.remove();
+}
+function bindVideo(sl) {
+  const start = toSec(sl.start), end = toSec(sl.end);
+  if (sl.src) {
+    const v = $('#vid');
+    if (start) v.addEventListener('loadedmetadata', () => { v.currentTime = start; }, { once: true });
+    v.addEventListener('timeupdate', () => { if (end && v.currentTime >= end) { v.pause(); videoWatched(); } });
+    v.addEventListener('ended', videoWatched);
+  }
+  if (sl.youtube) {
+    loadYT().then(YT => {
+      const box = $('#ytp');
+      if (!box) return; // учень уже перейшов на інший слайд
+      // відео недоступне — пояснюємо і не блокуємо урок
+      const fail = text => { const el = $('#ytp') || $('.video iframe'); if (el) el.outerHTML = `<p class="fb warn" style="padding:16px">${text}</p>`; videoWatched(); };
+      if (!YT) return fail('Не вдалося завантажити YouTube. Перевірте інтернет або чи не блокує його шкільна мережа. Можна перейти далі.');
+      new YT.Player('ytp', {
+        host: 'https://www.youtube-nocookie.com', videoId: ytId(sl.youtube),
+        playerVars: Object.assign({ rel: 0, playsinline: 1, modestbranding: 1 }, start ? { start } : {}, end ? { end } : {}),
+        events: {
+          onStateChange: e => { if (e.data === YT.PlayerState.ENDED) videoWatched(); },
+          onError: () => fail('Це відео зараз недоступне (можливо, його видалено або закрито доступ). Можна перейти далі.'),
+        },
+      });
+    });
+  }
 }

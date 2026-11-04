@@ -93,7 +93,10 @@ function trainersView() {
     <h2>Генератори прикладів</h2><div class="list">${gens}</div>`;
 }
 function lessonsView() {
-  const slides = SLIDE_LESSONS.map(l => `<div class="item lesson-item"><span class="lg">${F(1, 2)}</span><div class="grow"><b>${esc(l.title)}</b><small>${esc(l.grade || '')} · теорія, приклади, ${l.sections.reduce((n, s) => n + s.slides.filter(isTask).length, 0)} завдань</small></div>
+  const count = (l, f) => l.sections.reduce((n, s) => n + s.slides.filter(f).length, 0);
+  // чернетки бачить лише вчитель: за посиланням з #draft або в демо-режимі
+  const showDrafts = !API_URL || location.hash === '#draft';
+  const slides = SLIDE_LESSONS.filter(l => !l.draft || showDrafts).map(l => `<div class="item lesson-item"><span class="lg">${l.icon ? esc(l.icon) : F(1, 2)}</span><div class="grow"><b>${esc(l.title)}</b>${l.draft ? ' <span class="tag wait">Чернетка: учні не бачать</span>' : ''}<small>${esc(l.grade || '')} · ${isVideoLesson(l) ? `відеоурок: ${count(l, sl => sl.type === 'video')} відео` : 'теорія, приклади'}, ${count(l, isTask)} завдань</small></div>
     ${me.done.includes('Урок: ' + l.title) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startSlides('${l.id}')">Відкрити</button></div>`).join('');
   return `${slides ? `<h2>Інтерактивні уроки</h2><div class="list">${slides}</div>` : ''}<h2>Уроки від учителя</h2><div class="list">${data.lessons.map((l, i) => `<div class="item"><div class="grow"><b>${esc(l.name)}</b><small>${l.steps.length} кроків</small></div>
     ${me.done.includes('Урок: ' + l.name) ? '<span class="tag">Пройдено</span>' : ''}<button class="btn sm" onclick="startLesson(${i})">Відкрити</button></div>`).join('') || '<p class="muted">Учитель ще не додав уроків у таблицю.</p>'}</div>`;
