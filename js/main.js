@@ -9,7 +9,7 @@
   if (saved && saved.guest && data.guestMode) me = { guest: true, name: 'Гість', ...loadGuest() };
   else if (saved && data.students.includes(saved.name)) {
     const r = await withLoader('Шукаю твою книжку…', () => api('login', saved));
-    if (r.ok) me = { ...saved, xp: r.xp, done: r.done };
+    if (r.ok) me = { ...saved, xp: r.xp, done: r.done, rw: r.rewards };
   }
   render();
 })();

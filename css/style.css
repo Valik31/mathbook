@@ -230,7 +230,7 @@ label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
   .pincards{grid-template-columns:repeat(2,1fr)}
   .pincard{border-color:#666}
 }
-.rank{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.rank{display:grid;grid-template-columns:32px auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .rank b.r{color:var(--muted);text-align:right}
 .rank.me{border-color:var(--blue);background:var(--blue-soft)}
 .rank.top1 b.r{color:var(--mark-ink);background:var(--mark);border-radius:6px;text-align:center}
@@ -247,3 +247,70 @@ label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
 @keyframes hop{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-16px)}}
 .loader p{font-weight:600;margin:0}
 @media (prefers-reduced-motion:reduce){.syms span{animation-duration:3s}}
+
+/* ---------- нагороди: зірки, досягнення, крамниця ---------- */
+:root{--gold:#C98A00;--gold-soft:#FFF3CC}
+@media (prefers-color-scheme: dark){:root{--gold:#F4C542;--gold-soft:#3A3010}}
+.stars,.stars-chip{display:inline-flex;align-items:center;gap:3px;font-weight:700;color:var(--gold);background:var(--gold-soft);border-radius:999px;padding:3px 10px}
+.stars-chip{border:0;cursor:pointer;font:inherit;font-weight:700}
+.stars-item{border-color:var(--gold);background:linear-gradient(90deg,var(--gold-soft),var(--card))}
+.row-c{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.wallet{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-color:var(--gold);background:linear-gradient(120deg,var(--gold-soft),var(--card) 70%)}
+.w-main{display:flex;align-items:center;gap:14px}
+.w-star{font-size:2.6rem;color:var(--gold);line-height:1}
+.w-n{font:700 2.4rem "Unbounded",sans-serif;line-height:1}
+.w-side{display:grid;gap:2px;font-size:.9rem;color:var(--muted)} .w-side b{color:var(--ink)}
+.how{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.how summary{cursor:pointer;font-weight:600}
+.how ul{margin:8px 0 0;padding-left:1.2em;display:grid;gap:4px;font-size:.92rem}
+.achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.ach{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1.5px dashed var(--line);border-radius:12px;opacity:.6;min-width:0}
+.ach.got{opacity:1;border-style:solid;border-color:var(--gold);background:var(--card)}
+.ach>div{flex:1;min-width:0} .ach b{display:block;font-size:.9rem} .ach small{display:block;color:var(--muted);font-size:.78rem;line-height:1.3}
+.ach-i{width:40px;height:40px;flex:none;border-radius:10px;display:grid;place-items:center;font:700 .9rem "Unbounded",sans-serif;background:var(--line);color:var(--muted)}
+.ach.got .ach-i{background:var(--gold);color:#fff}
+.ach-s{font-size:.78rem;font-weight:700;color:var(--gold);white-space:nowrap}
+.new-ach{display:grid;gap:6px;justify-items:center;text-align:left}
+.new-ach .ach{width:100%;max-width:380px}
+.shop{display:grid;gap:8px}
+.sh-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;flex-wrap:wrap}
+.sh-item .grow{flex:1;min-width:170px} .sh-item small{display:block;color:var(--muted)}
+.sh-prev{width:56px;display:grid;place-items:center;flex:none}
+.sh-buy{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.sh-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font:700 1.1rem "Unbounded",sans-serif;background:var(--blue-soft);color:var(--blue)}
+.mini-cert{width:46px;height:34px;border:2px solid var(--gold);border-radius:4px;background:var(--gold-soft);display:grid;align-content:center;gap:3px;padding:0 7px}
+.mini-cert i{display:block;height:2px;background:var(--gold);border-radius:1px} .mini-cert i:nth-child(2){width:70%;margin:0 auto}
+.confirm{font-weight:600;font-size:.88rem}
+.tag.wait{background:var(--gold-soft);color:var(--gold)} .tag.no{background:var(--red-soft);color:var(--red)}
+.title-pill{display:inline-block;font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--blue);color:#fff}
+.title-pill.sm{font-size:.7rem;padding:1px 8px;margin-left:6px;vertical-align:middle}
+.rank .rn{min-width:0;overflow-wrap:anywhere}
+/* значок учня і рамки з крамниці */
+.ava{width:34px;height:34px;border-radius:50%;display:inline-grid;place-items:center;font-weight:700;background:var(--blue-soft);color:var(--blue);flex:none;border:3px solid var(--line)}
+.ava.big{width:48px;height:48px;font-size:1.2rem}
+.ava[class*="frame-"]{border-color:transparent;background-origin:border-box;background-clip:padding-box,border-box}
+.frame-gold{background-image:linear-gradient(var(--blue-soft),var(--blue-soft)),linear-gradient(135deg,#FFE27A,#C98A00,#FFE27A,#9A6A00)}
+.frame-space{background-image:linear-gradient(var(--blue-soft),var(--blue-soft)),linear-gradient(135deg,#0B1030,#6A5CFF 45%,#1B1F5E 60%,#B9B4FF 75%,#0B1030)}
+.frame-fire{background-image:linear-gradient(var(--blue-soft),var(--blue-soft)),linear-gradient(135deg,#FFD23F,#FF6B00,#D3172E)}
+.frame-mint{background-image:linear-gradient(var(--blue-soft),var(--blue-soft)),linear-gradient(135deg,#7CF2C8,#15A37A)}
+.frame-rainbow{background-image:linear-gradient(var(--blue-soft),var(--blue-soft)),conic-gradient(#F44,#FB0,#4C4,#29F,#A4F,#F44)}
+/* сертифікат: на екрані й на папері (A4 альбомна) */
+.cert{background:#fff;color:#1A2140;padding:14px;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.12);page:cert}
+.cert-in{border:3px double #C98A00;outline:6px solid #FFF3CC;outline-offset:-12px;padding:34px 28px;display:grid;gap:8px;justify-items:center;text-align:center;aspect-ratio:1.414/1}
+.cert-top{font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;color:#5A6384}
+.cert-h{font:700 clamp(1.8rem,6vw,3rem) "Unbounded",sans-serif;color:#2646D4;letter-spacing:.06em;text-transform:uppercase}
+.cert-sub{color:#5A6384;font-size:.95rem}
+.cert-name{font:700 clamp(1.5rem,5vw,2.4rem) "Golos Text",sans-serif;border-bottom:2px solid #C98A00;padding:0 24px 4px}
+.cert-title{font:700 clamp(1.1rem,3.5vw,1.6rem) "Unbounded",sans-serif;color:#C98A00}
+.cert-desc{font-size:1rem}
+.cert-foot{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;font-size:.85rem;color:#5A6384;flex-wrap:wrap}
+.seal{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:#C98A00;color:#fff;font-size:1.8rem;box-shadow:0 0 0 4px #FFF3CC,0 0 0 6px #C98A00}
+@page cert{size:A4 landscape;margin:10mm}
+@media print{
+  .cert{box-shadow:none;padding:0}
+  .cert-in{aspect-ratio:auto;min-height:180mm}
+  .top,#banner,nav.tabs,.noprint{display:none!important}
+}
+.top .right{flex-wrap:wrap;justify-content:flex-end}
+.stars-chip,.who .muted{white-space:nowrap}
+@media (max-width:480px){.lab-link{font-size:.8rem;padding:5px 9px}}

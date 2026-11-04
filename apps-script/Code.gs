@@ -14,7 +14,22 @@ const SHEET = {
   trainers: 'Тренажери',
   lessons: 'Уроки',
   results: 'Результати',
+  rewards: 'Нагороди',
+  purchases: 'Покупки',
 };
+
+const REWARDS_HEADER = ['Нагорода', 'Тип (рамка / звання / сертифікат / оцінка)', 'Ціна, ★', 'Ліміт на місяць', 'Параметр', 'Опис'];
+const REWARDS_DEFAULT = [
+  ['Золота рамка', 'рамка', 40, '', 'gold', 'Золота рамка навколо твого значка в рейтингу'],
+  ['Космічна рамка', 'рамка', 70, '', 'space', 'Темно-синя рамка із зорями'],
+  ['Вогняна рамка', 'рамка', 100, '', 'fire', 'Помаранчево-червона рамка'],
+  ['Звання «Знавець дробів»', 'звання', 50, '', 'Знавець дробів', 'Звання під твоїм іменем у рейтингу'],
+  ['Звання «Гросмейстер обчислень»', 'звання', 150, '', 'Гросмейстер обчислень', 'Звання під твоїм іменем у рейтингу'],
+  ['Сертифікат «Майстер дробів»', 'сертифікат', 120, 1, 'Майстер дробів', 'за успіхи у вивченні дробів'],
+  ['Сертифікат «Зірка класу»', 'сертифікат', 200, 1, 'Зірка класу', 'за старанність і наполегливість у математиці'],
+  ['+1 бал до самостійної роботи', 'оцінка', 250, 1, '', 'Учитель додасть 1 бал до оцінки за самостійну роботу'],
+];
+const PURCHASES_HEADER = ['ID', 'Дата', 'Учень', 'Нагорода', 'Ціна, ★', 'Статус (видано / очікує / відхилено)'];
 
 /* ---------- одноразове налаштування таблиці ---------- */
 function setup() {
@@ -74,6 +89,8 @@ function doPost(e) {
   if (body.action === 'login') return json_(login_(body));
   if (body.action === 'result') return json_(saveResult_(body));
   if (body.action === 'teacher') return json_(teacher_(body));
+  if (body.action === 'buy') return json_(buy_(body));
+  if (body.action === 'equip') return json_(equip_(body));
   return json_({ ok: false, error: 'Невідома дія' });
 }
 
@@ -116,13 +133,14 @@ function groupBy_(rows, map) {
 }
 
 function rating_() {
-  const xp = {};
+  const xp = {}, cos = cosmetics_();
   rows_(SHEET.students).forEach(r => { xp[String(r[0]).trim()] = 0; });
   rows_(SHEET.results).forEach(r => {
     const name = String(r[1]).trim();
     if (name in xp) xp[name] += Number(r[5]) || 0;
   });
-  return Object.keys(xp).map(n => ({ name: n, xp: xp[n] })).sort((a, b) => b.xp - a.xp);
+  return Object.keys(xp).map(n => ({ name: n, xp: xp[n], frame: (cos[n] || {}).frame || '', title: (cos[n] || {}).title || '' }))
+    .sort((a, b) => b.xp - a.xp);
 }
 
 function init_() {
@@ -144,6 +162,7 @@ function init_() {
       a: String(r[3]),
     })).map(g => ({ name: g.name, steps: g.items })),
     rating: rating_(),
+    shop: shop_(),
   };
 }
 
@@ -166,7 +185,7 @@ function studentInfo_(name) {
 function login_(body) {
   if (!checkPin_(body.name, body.pin)) return { ok: false, error: 'Неправильне ім’я або PIN' };
   const info = studentInfo_(String(body.name).trim());
-  return { ok: true, name: String(body.name).trim(), xp: info.xp, done: info.done };
+  return { ok: true, name: String(body.name).trim(), xp: info.xp, done: info.done, rewards: rewardsState_(String(body.name).trim()) };
 }
 
 function saveResult_(body) {
@@ -186,7 +205,7 @@ function saveResult_(body) {
     lock.releaseLock();
   }
   const info = studentInfo_(name);
-  return { ok: true, gained: xp, xp: info.xp, done: info.done, rating: rating_() };
+  return { ok: true, gained: xp, xp: info.xp, done: info.done, rating: rating_(), rewards: rewardsState_(name) };
 }
 
 /* ---------- оновлення таблиці, створеної старішою версією ---------- */
@@ -195,6 +214,11 @@ function migrate_(ss) {
   const have = settingsRaw_();
   if (!('Гостьовий режим (так/ні)' in have)) setSetting_('Гостьовий режим (так/ні)', 'так');
   if (!('Пароль вчителя' in have)) setSetting_('Пароль вчителя', 'змініть-мене');
+  // нагороди: аркуші й колонки для рамки та звання учня
+  makeSheet_(ss, SHEET.rewards, [REWARDS_HEADER].concat(REWARDS_DEFAULT));
+  makeSheet_(ss, SHEET.purchases, [PURCHASES_HEADER]);
+  const st = ss.getSheetByName(SHEET.students);
+  if (st && !String(st.getRange(1, 3).getValue()).trim()) st.getRange(1, 3, 1, 2).setValues([['Рамка', 'Звання']]).setFontWeight('bold');
   // текстовий формат для аркушів з відповідями та PIN
   [SHEET.students, SHEET.trainers, SHEET.lessons].forEach(name => {
     const sh = ss.getSheetByName(name);
@@ -229,6 +253,7 @@ function teacher_(b) {
     else if (b.op === 'addTrainer') err = addTrainer_(b);
     else if (b.op === 'deleteTrainer') deleteWhere_(SHEET.trainers, r => String(r[0]).trim() === String(b.name).trim());
     else if (b.op === 'saveSettings') saveSettings_(b);
+    else if (b.op === 'decidePurchase') err = decidePurchase_(b);
     else err = 'Невідома дія';
     if (err) return { ok: false, error: err };
   } finally {
@@ -249,6 +274,8 @@ function overview_() {
       correct: Number(r[3]) || 0, total: Number(r[4]) || 0, xp: Number(r[5]) || 0,
     })),
     trainers: init_().trainers,
+    purchases: purchases_(),
+    shop: shop_(),
   };
 }
 
@@ -299,3 +326,176 @@ function deleteWhere_(sheetName, test) {
   const v = sh.getDataRange().getValues();
   for (let i = v.length - 1; i >= 1; i--) if (test(v[i])) sh.deleteRow(i + 1);
 }
+
+/* ---------- нагороди: зірки, досягнення, крамниця ---------- */
+const REWARD_TYPES = ['рамка', 'звання', 'сертифікат', 'оцінка'];
+
+function shop_() {
+  return rows_(SHEET.rewards).map(r => ({
+    name: String(r[0]).trim(), type: String(r[1]).trim().toLowerCase(), price: Number(r[2]) || 0,
+    limit: Number(r[3]) || 0, param: String(r[4] || '').trim(), desc: String(r[5] || '').trim(),
+  })).filter(x => x.name && x.price > 0 && REWARD_TYPES.indexOf(x.type) >= 0);
+}
+
+function purchases_(name) {
+  return rows_(SHEET.purchases).map(r => ({
+    id: String(r[0]).trim(), date: r[1] instanceof Date ? r[1].toISOString() : String(r[1]),
+    name: String(r[2]).trim(), reward: String(r[3]).trim(), price: Number(r[4]) || 0, status: String(r[5]).trim(),
+  })).filter(p => p.id && (!name || p.name === name));
+}
+
+function resultRows_(name) {
+  return rows_(SHEET.results).filter(r => String(r[1]).trim() === name)
+    .map(r => ({ date: r[0], trainer: String(r[2]), correct: Number(r[3]) || 0, total: Number(r[4]) || 0 }));
+}
+
+function cosmetics_() {
+  const c = {};
+  rows_(SHEET.students).forEach(r => { c[String(r[0]).trim()] = { frame: String(r[2] || '').trim(), title: String(r[3] || '').trim() }; });
+  return c;
+}
+
+function rewardsState_(name) {
+  const purchases = purchases_(name), sum = rwSummary(resultRows_(name), purchases), cos = cosmetics_()[name] || {};
+  return { stars: sum.balance, earned: sum.earned, spent: sum.spent, achievements: sum.achievements, streak: sum.streak,
+    purchases: purchases, frame: cos.frame || '', title: cos.title || '' };
+}
+
+function setCosmetic_(name, kind, value) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET.students);
+  const v = sh.getDataRange().getValues();
+  for (let i = 1; i < v.length; i++) {
+    if (String(v[i][0]).trim() === name) { sh.getRange(i + 1, kind === 'frame' ? 3 : 4).setNumberFormat('@').setValue(value); return; }
+  }
+}
+
+function buy_(b) {
+  if (!checkPin_(b.name, b.pin)) return { ok: false, error: 'Неправильне ім’я або PIN' };
+  const name = String(b.name).trim();
+  const item = shop_().find(x => x.name === String(b.reward || ''));
+  if (!item) return { ok: false, error: 'Такої нагороди вже немає. Оновіть сторінку.' };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  let status;
+  try {
+    const st = rewardsState_(name);
+    const mine = st.purchases.filter(p => p.reward === item.name && p.status !== 'відхилено');
+    if ((item.type === 'рамка' || item.type === 'звання') && mine.length) return { ok: false, error: 'Ця нагорода в тебе вже є.' };
+    if (item.limit) {
+      const now = new Date();
+      const month = mine.filter(p => { const d = new Date(p.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+      if (month.length >= item.limit) return { ok: false, error: 'Цю нагороду можна взяти не більше ' + item.limit + ' раз(и) на місяць.' };
+    }
+    if (st.stars < item.price) return { ok: false, error: 'Не вистачає ' + (item.price - st.stars) + ' ★.' };
+    status = item.type === 'оцінка' ? 'очікує' : 'видано'; // бонус до оцінки підтверджує вчитель
+    SpreadsheetApp.getActive().getSheetByName(SHEET.purchases)
+      .appendRow(['p' + Utilities.getUuid().replace(/-/g, '').slice(0, 10), new Date(), name, item.name, item.price, status]);
+    if (item.type === 'рамка') setCosmetic_(name, 'frame', item.param);
+    if (item.type === 'звання') setCosmetic_(name, 'title', item.param || item.name);
+  } finally {
+    lock.releaseLock();
+  }
+  return { ok: true, status: status, rewards: rewardsState_(name), rating: rating_() };
+}
+
+function equip_(b) {
+  if (!checkPin_(b.name, b.pin)) return { ok: false, error: 'Неправильне ім’я або PIN' };
+  const name = String(b.name).trim(), kind = b.kind === 'frame' ? 'frame' : 'title', value = String(b.value || '');
+  if (value) {
+    const owned = rewardsState_(name).purchases.filter(p => p.status === 'видано').map(p => p.reward);
+    const ok = shop_().some(x => owned.indexOf(x.name) >= 0 && x.type === (kind === 'frame' ? 'рамка' : 'звання')
+      && (kind === 'frame' ? x.param : (x.param || x.name)) === value);
+    if (!ok) return { ok: false, error: 'Спершу отримай цю нагороду в крамниці.' };
+  }
+  setCosmetic_(name, kind, value);
+  return { ok: true, rewards: rewardsState_(name), rating: rating_() };
+}
+
+function decidePurchase_(b) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET.purchases);
+  const v = sh.getDataRange().getValues();
+  for (let i = 1; i < v.length; i++) {
+    if (String(v[i][0]).trim() === String(b.id)) {
+      if (String(v[i][5]).trim() !== 'очікує') return 'Цей запит уже розглянуто.';
+      sh.getRange(i + 1, 6).setValue(b.approve ? 'видано' : 'відхилено'); // відхилене — зірки повертаються учневі
+      return null;
+    }
+  }
+  return 'Запит не знайдено. Оновіть кабінет.';
+}
+
+// ===== RW: ПОЧАТОК ПРАВИЛ =====
+const RW_GENERATORS = ['Усний рахунок', 'Таблиця множення', 'Дроби', 'Рівняння'];
+const RW_FRACTIONS = ['Скорочення дробів', 'Зведення до нового знаменника', 'Додавання і віднімання дробів',
+  'Множення дробів', 'Перетворення мішаного числа', 'Множення мішаних чисел'];
+const RW_ACHIEVEMENTS = [
+  { id: 'first', name: 'Перший крок', desc: 'Пройди перший тренажер або урок', stars: 5, icon: '1' },
+  { id: 'perfect', name: 'Без помилок', desc: 'Розв’яжи тренажер (від 5 питань) без жодної помилки', stars: 10, icon: '✓' },
+  { id: 'sniper', name: 'Снайпер', desc: '5 разів пройди тренажер без помилок', stars: 30, icon: '◎' },
+  { id: 'lesson', name: 'Перший урок', desc: 'Заверши будь-який урок', stars: 10, icon: '¾' },
+  { id: 'explorer', name: 'Дослідник', desc: 'Спробуй 5 різних тренажерів', stars: 15, icon: '5' },
+  { id: 'streak3', name: 'Три дні поспіль', desc: 'Займайся 3 дні підряд', stars: 15, icon: '3д' },
+  { id: 'streak7', name: 'Тиждень поспіль', desc: 'Займайся 7 днів підряд', stars: 40, icon: '7д' },
+  { id: 'hundred', name: 'Сотня', desc: 'Дай 100 правильних відповідей', stars: 20, icon: '100' },
+  { id: 'fivehundred', name: 'П’ятсот', desc: 'Дай 500 правильних відповідей', stars: 60, icon: '500' },
+  { id: 'persistent', name: 'Наполегливий', desc: 'Покращ свій результат у тренажері на 3 відповіді або більше', stars: 15, icon: '↑' },
+  { id: 'fractions', name: 'Майстер дробів', desc: 'Пройди всі тренажери з дробами на 8 з 10 або краще', stars: 50, icon: '½' },
+];
+function rwDayNum(d) { const x = new Date(d); return isNaN(x) ? -1 : Math.floor(Date.UTC(x.getFullYear(), x.getMonth(), x.getDate()) / 864e5); }
+function rwIsLesson(trainer) { return String(trainer).indexOf('Урок: ') === 0; }
+
+// Зірки за кожен результат (rows — результати одного учня в порядку часу: { date, trainer, correct, total }).
+// Перша спроба тренажера за день — повністю, друга — половина, далі — 0 (захист від накруток).
+// Генератори прикладів дають половину. +5 за проходження без помилок (від 5 питань) і за урок.
+function rwStarsFor(rows) {
+  const seen = {};
+  return rows.map(function (r) {
+    const key = r.trainer + '|' + rwDayNum(r.date);
+    const k = seen[key] = (seen[key] || 0) + 1;
+    const mult = k === 1 ? 1 : k === 2 ? 0.5 : 0;
+    let s = r.correct * (RW_GENERATORS.indexOf(r.trainer) >= 0 ? 0.5 : 1);
+    if (r.total >= 5 && r.correct === r.total) s += 5;
+    if (rwIsLesson(r.trainer)) s += 5;
+    return Math.floor(s * mult);
+  });
+}
+
+// Найдовша серія днів поспіль
+function rwStreak(rows) {
+  const days = Array.from(new Set(rows.map(function (r) { return rwDayNum(r.date); }))).filter(function (d) { return d >= 0; }).sort(function (a, b) { return a - b; });
+  let best = 0, cur = 0;
+  days.forEach(function (d, i) { cur = i && d === days[i - 1] + 1 ? cur + 1 : 1; best = Math.max(best, cur); });
+  return best;
+}
+
+// Які досягнення вже є (масив id)
+function rwAchievements(rows) {
+  const perfect = rows.filter(function (r) { return r.total >= 5 && r.correct === r.total; }).length;
+  const trainers = Array.from(new Set(rows.filter(function (r) { return !rwIsLesson(r.trainer); }).map(function (r) { return r.trainer; })));
+  const correct = rows.reduce(function (s, r) { return s + r.correct; }, 0);
+  const streak = rwStreak(rows);
+  const minSoFar = {};
+  let persistent = false;
+  rows.forEach(function (r) {
+    if (r.trainer in minSoFar && r.correct - minSoFar[r.trainer] >= 3) persistent = true;
+    minSoFar[r.trainer] = Math.min(r.trainer in minSoFar ? minSoFar[r.trainer] : Infinity, r.correct);
+  });
+  const fractions = RW_FRACTIONS.every(function (name) { return rows.some(function (r) { return r.trainer === name && r.total && r.correct / r.total >= 0.8; }); });
+  const got = {
+    first: rows.length > 0, perfect: perfect >= 1, sniper: perfect >= 5, lesson: rows.some(function (r) { return rwIsLesson(r.trainer); }),
+    explorer: trainers.length >= 5, streak3: streak >= 3, streak7: streak >= 7, hundred: correct >= 100, fivehundred: correct >= 500,
+    persistent: persistent, fractions: fractions,
+  };
+  return RW_ACHIEVEMENTS.filter(function (a) { return got[a.id]; }).map(function (a) { return a.id; });
+}
+
+// Підсумок: зароблено, витрачено, баланс. purchases — { reward, price, status }; відхилені покупки не рахуються.
+function rwSummary(rows, purchases) {
+  const sorted = rows.slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+  const achievements = rwAchievements(sorted);
+  const fromResults = rwStarsFor(sorted).reduce(function (s, x) { return s + x; }, 0);
+  const fromAch = RW_ACHIEVEMENTS.filter(function (a) { return achievements.indexOf(a.id) >= 0; }).reduce(function (s, a) { return s + a.stars; }, 0);
+  const spent = (purchases || []).filter(function (p) { return p.status !== 'відхилено'; }).reduce(function (s, p) { return s + (Number(p.price) || 0); }, 0);
+  return { earned: fromResults + fromAch, spent: spent, balance: fromResults + fromAch - spent, achievements: achievements, streak: rwStreak(sorted) };
+}
+// ===== RW: КІНЕЦЬ ПРАВИЛ =====
