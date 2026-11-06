@@ -261,3 +261,5 @@ label.chk{display:flex;gap:8px;align-items:center;font-weight:600}
 .num-in:focus{outline:none;border-color:var(--blue)} .num-in.no{border-color:var(--red);background:var(--red-soft)}
 .unit{font-size:1.2rem;font-weight:600;color:var(--muted)}
 .tag.wait{background:#FFF3CC;color:#8A6200}
+.big-n{font-size:1.3em;font-weight:700}
+.op.lbl{font-size:.75em;font-weight:600;color:var(--muted)}

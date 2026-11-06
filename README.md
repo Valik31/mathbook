@@ -26,7 +26,8 @@ js/                   рушій платформи
 trainers/             кожен тренажер — окремий файл
   generatory.js         генератори прикладів (усний рахунок, множення, …)
   skorochennia-drobiv.js, zvedennia-do-znamennyka.js, dodavannia-vidnimannia-drobiv.js,
-  mnozhennia-drobiv.js, peretvorennia-mishanoho-chysla.js, mnozhennia-mishanykh-chysel.js
+  mnozhennia-drobiv.js, peretvorennia-mishanoho-chysla.js, mnozhennia-mishanykh-chysel.js,
+  vzaiemno-oberneni-chysla.js
 lessons/              кожен інтерактивний урок — окремий файл
 apps-script/Code.gs   сервер для Google Таблиці
 ar-lab/               AR/VR-лабораторія
